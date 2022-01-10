@@ -3,12 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "../../../@rarible/royalties/LibPart.sol";
+import "../../../@rarible/royalties/LibRoyaltiesV2.sol";
 import "../../../@rarible/royalties/impl/RoyaltiesV2Impl.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155 {
+abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155, Ownable {
 
     using SafeMath for uint256;
 
@@ -34,5 +35,18 @@ abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155 {
     ) { 
         LibPart.Part[] memory _raribleRoyalty = getRaribleV2Royalties(_tokenId);
         return (_raribleRoyalty[0].account,_salePrice.mul(_raribleRoyalty[0].value).div(100));        
+    }
+
+    function setRoyalties(uint _tokenId, address payable _royaltiesRecipientAddress, uint96 _percentageBasisPoints) public onlyOwner {
+        LibPart.Part[] memory _royalties = new LibPart.Part[](1);
+        _royalties[0].value = _percentageBasisPoints;
+        _royalties[0].account = _royaltiesRecipientAddress;
+        _saveRoyalties(_tokenId, _royalties);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override (ERC1155) returns(bool) {
+        return interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ? 
+            true :
+            super.supportsInterface(interfaceId);
     }
 }
