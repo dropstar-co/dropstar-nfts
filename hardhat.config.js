@@ -7,13 +7,6 @@ const {
   DEPLOYER_PRIVATE_KEY,
 } = require("./.env.js")
 
-console.log({
-  ALCHEMY_API_KEY_MUMBAI,
-  ALCHEMY_API_KEY_MAINNET,
-  DEPLOYER_PRIVATE_KEY,
-})
-
-
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {

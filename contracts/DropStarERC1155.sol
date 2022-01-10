@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
 
-contract DropStarERC1155 is ERC1155,DropStarERC1155withRoyaltyImpl, Ownable{
+contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl, Ownable{
 
     using SafeMath for uint256;
 
