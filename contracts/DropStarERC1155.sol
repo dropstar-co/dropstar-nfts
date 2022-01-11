@@ -19,4 +19,9 @@ contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl{
     function mint(address to,uint256 id,uint256 amount,bytes memory data) public onlyOwner{
         _mint(to, id, amount, data);
     }
+
+    function burn(address from, uint256 id, uint256 amount) public {
+        require(balanceOf(msg.sender, id) >= amount);
+        _burn(from, id, amount);
+    }
 }
