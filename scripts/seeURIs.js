@@ -19,6 +19,7 @@ async function main() {
     "0x986a15F639270226430d29cc7d4281EE77Da0Bb9",
     "0xB8562b0F4ED2197D14e1C4B79c4954Cd05D4F30D",
   ]
+
   const tokenID = 0 ;
   const dropstarDeveloper = "0x5e14b4d9af29066153c9ee3fc2563c95784a687a";
 
@@ -26,18 +27,15 @@ async function main() {
   const uri_dummy = await dummyNFT.uri(0)
   const  balance_dummy = await dummyNFT.balanceOf(dropstarDeveloper,"42553992891219984983126389820265221838647002681979716060980732704314978467850")
   
-console.log({ dummyNFT,uri_dummy,balance_dummy})
-console.log({contractAddresses})
+  console.log({ dummyNFT,uri_dummy,balance_dummy})
+  console.log({contractAddresses})
 
-for (var i = 0; i < contractAddresses.length; i++) {
-  const contractAddress = contractAddresses[i]
- 
+  for (var i = 0; i < contractAddresses.length; i++) {
+    const contractAddress = contractAddresses[i]
     const dropStarERC1155 = await hre.ethers.getContractAt("DropStarERC1155", contractAddress);
     const uri = await dropStarERC1155.uri(0)
     const balance =  await dropStarERC1155.balanceOf(dropstarDeveloper,tokenID)
-
     console.log({contractAddress,uri,balance})
-    
   }
 
 }
