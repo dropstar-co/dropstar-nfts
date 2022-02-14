@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
+require('hardhat-abi-exporter');
 
 const {
   ALCHEMY_API_KEY_MUMBAI,
