@@ -3,21 +3,19 @@ const fs = require('fs')
 
 const { NFTStorage, File } = require('nft.storage')
 
-
 const fetch = require('node-fetch');
 
 const {
   NFT_STORAGE_API_KEY  
 } = require("../.env.js")
 
-async function main() {
-    const data = fs.readFileSync('./nft/collection/descriptor_0.json', 'utf8')
+async function main() {    
     const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
 
     //await useNTFStorage_fetch(data, storage);
     //await useNTFStorage_basic(data, storage);
     //await useNTFStorage_advanced(data, storage);
-    await useNTFStorage_directory(data, storage);
+    const cidDescription = await useNTFStorage_directory(storage);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -90,39 +88,54 @@ async function useNTFStorage_directoryExample(data, storage) {
   console.log(status)
 }
 
-async function useNTFStorage_directory(data, storage) {
+async function useNTFStorage_directory( storage) {
+/*
+  let range = n => [...Array(n).keys()]
 
-
-  const cid = await storage.storeDirectory([
-    new File([await fs.promises.readFile('./nft/collection/0')], "0".repeat(63)+'0'),
-    new File([await fs.promises.readFile('./nft/collection/1')], "0".repeat(63)+'1'),
-    new File([await fs.promises.readFile('./nft/collection/2')], "0".repeat(63)+'2'),
-    new File([await fs.promises.readFile('./nft/collection/3')], "0".repeat(63)+'3'),
-  ])
   
-  console.log({ cid })
-  const status = await storage.status(cid)
-  console.log(status)
-
-  const dataDescription = {
-    "name": "Entret Planet",
-    "description": "Created by [MarsAddiction](https://opensea.io/MarsAddiction?tab=created)\nEntret is a music vision created by Gutto Serta presenting Age of Smar Machine. In collaboration with Eralp Orkun Cihan and Feyza Aslan, this a 3D presentation from the sounds you hear. BONUS: the first 5 owners will get a copy of its original piece in a physical vinyl produced by Gutto Serta", 
-    "image": `ipfs://${cid}/{id}`,
-    "attributes": [ {
-    }]
+  const files = range(4).map(index => index.toString()).map(index => {
+    const buffer = await fs.promises.readFile(`./nft/collection/${index}`)
+    return new File([buffer],"0".repeat(63)+index)
+  })
+*/
+const maxFiles = 4;
+  
+  let files = Array(maxFiles)
+  for(index = 0; index < maxFiles ; index ++){
+    const buffer = await fs.promises.readFile(`./nft/collection/${index}`)
+    files[index] = new File([buffer],"0".repeat(63)+index)
   }
 
-  const response = await fetch('https://api.nft.storage/upload', {
-    method: 'post',
-    body: JSON.stringify(dataDescription),
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + NFT_STORAGE_API_KEY,
-      'Host': 'api.nft.storage'
-    }
-  });
-  const data2 = await response.json();
-  console.log({data2})
+  const cidImages = await storage.storeDirectory(files)
+  console.log({  cidImages })
+
+  const status = await storage.status(cidImages)
+  console.log(status)
+  
+  
+  let filesMetadata = Array(maxFiles)
+  for(index = 0; index < maxFiles ; index++){
+      const json = JSON.parse(fs.readFileSync(`./nft/collection/descriptor_${index}.json`))
+
+      json.image = `ipfs://${cidImages}/{id}`
+      fs.writeFileSync(`./nft/collection/descriptors/descriptor_${index}.json`, JSON.stringify(json,null,2))
+
+      const buffer = await fs.promises.readFile(`./nft/collection/descriptors/descriptor_${index}.json`)
+      filesMetadata[index] = new File([buffer],"0".repeat(63)+index)
+  }
+
+
+  const cidMetadata = await storage.storeDirectory(filesMetadata)
+  console.log({  cidMetadata })
+
+  
+  const statusCidMetadata = await storage.status(cidMetadata)
+  console.log(statusCidMetadata)
+  
+
+  // As we need the cids of the images for the descriptors, we are recreating the metadata files.
+  // const cidMetadata = await storage.storeDirectory([])
+
+  return statusCidMetadata
 }
 
