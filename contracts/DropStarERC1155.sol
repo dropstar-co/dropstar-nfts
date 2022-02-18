@@ -6,9 +6,8 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
-import "./@dropstar/royalties/impl/MultiURIERC1155.sol";
 
-contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl, MultiURIERC1155 {
+contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl {
 
     using SafeMath for uint256;
 
@@ -19,11 +18,7 @@ contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl, MultiURIERC1155 {
 
     function mint(address to,uint256 tokenId,uint256 amount, string memory newuri, bytes memory data) public onlyOwner{
         _mint(to, tokenId, amount, data);
-        _setURI(tokenId, newuri);
-    }
-
-    function setURI(uint256 tokenId, string memory newuri) public onlyOwner{
-        URIs[tokenId] = newuri;
+        _setURI(newuri);
     }
 
     function burn(address from, uint256 tokenId, uint256 amount) public {
