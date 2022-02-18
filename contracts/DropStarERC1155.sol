@@ -12,7 +12,7 @@ contract DropStarERC1155 is DropStarERC1155withRoyaltyImpl, MultiURIERC1155 {
 
     using SafeMath for uint256;
 
-    constructor() ERC1155("https://ipfs.io/ipfs/QmceUTvLxgX34pLKgBCFJUiqABTVFoC6Btef68ke2i4hus/{id}"){
+    constructor(string memory metadataURI) ERC1155(metadataURI){
         bytes memory data = "\x00";  // you can extend this
         _mint(msg.sender, 0, 10, data);
     }

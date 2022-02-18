@@ -13,50 +13,24 @@ const {
   NFT_STORAGE_API_KEY  
 } = require("../.env.js")
 
+const useNTFStorage_directory = require('./nftstorage')
 
 
 async function main() {
-  {
-
-    const data = fs.readFileSync('./nft/collection/descriptor_0.json', 'utf8')
-    //console.log({data})
-    const response = await fetch('https://api.nft.storage/upload', {
-      method: 'post',
-      body: data,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + NFT_STORAGE_API_KEY,
-        'Host': 'api.nft.storage'
-      }
-    });
-    const data2 = await response.json();
-    console.log(data2.value.cid);
 
 
-    /*
-    curl -X POST --data-binary @art.jpg -H 'Authorization: Bearer YOUR_API_KEY' https://api.nft.storage/upload
-    */
+  const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
+  const metadataCID =  await useNTFStorage_directory(storage)
 
-
-    
-    const client = new NFTStorage({ token: NFT_STORAGE_API_KEY })
-        
-    const metadata = await client.store({
-      name: 'Descriptor file',
-      description: 'File to specify the metadata of the nft',
-      image: new File([data], 'description_0.json', { type: 'application/json' })
-    })
-
-    console.log({metadata})
-  }
-
-  return
+  const metadataURI = `ipfs://${metadataCID.cid}/{id}`
+  
+  console.log({metadataCID})
+  console.log({metadataURI})
 
   const [deployer] = await ethers.getSigners();
   
   const DropStarERC1155 = await hre.ethers.getContractFactory("DropStarERC1155");
-  const dropStarERC1155 = await DropStarERC1155.deploy();
+  const dropStarERC1155 = await DropStarERC1155.deploy(metadataURI);
 
   await dropStarERC1155.deployed();
 
@@ -69,9 +43,9 @@ async function main() {
 
   console.log("Sending to dropstarDeveloper")
 
-  await dropStarERC1155.mint(deployer.address, 0,1, calldata);
-  await dropStarERC1155.mint(deployer.address, 1,10, calldata);
-  await dropStarERC1155.mint(deployer.address, 2,20, calldata);
+  await dropStarERC1155.mint(deployer.address, 0,1,metadataURI, calldata);
+  await dropStarERC1155.mint(deployer.address, 1,10, metadataURI,calldata);
+  await dropStarERC1155.mint(deployer.address, 2,20, metadataURI,calldata);
 
 }
 

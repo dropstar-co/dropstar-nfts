@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const fs = require('fs')
 
-const { NFTStorage, File } = require('nft.storage')
+const { NFTStorage, File, Blob } = require('nft.storage')
 
 const fetch = require('node-fetch');
 
@@ -9,14 +9,12 @@ const {
   NFT_STORAGE_API_KEY  
 } = require("../.env.js")
 
+/*
 async function main() {    
     const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
-
-    //await useNTFStorage_fetch(data, storage);
-    //await useNTFStorage_basic(data, storage);
-    //await useNTFStorage_advanced(data, storage);
     const cidDescription = await useNTFStorage_directory(storage);
 }
+
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
@@ -26,6 +24,8 @@ main()
     console.error(error);
     process.exit(1);
   });
+
+  */
 
 async function useNTFStorage_fetch(data, storage) {
   const response = await fetch('https://api.nft.storage/upload', {
@@ -100,24 +100,37 @@ async function useNTFStorage_directory( storage) {
 */
 const maxFiles = 4;
   
+  let fileCID = Array(maxFiles)
   let files = Array(maxFiles)
   for(index = 0; index < maxFiles ; index ++){
     const buffer = await fs.promises.readFile(`./nft/collection/${index}`)
     files[index] = new File([buffer],"0".repeat(63)+index)
+
+    const cid = await storage.storeBlob(new Blob([buffer]))
+
+    
+    console.log({cid})
+    const status = await storage.status(cid)
+    console.log(status)
+
+    fileCID[index] = cid
+    
   }
 
+  /*
   const cidImages = await storage.storeDirectory(files)
   console.log({  cidImages })
 
   const status = await storage.status(cidImages)
   console.log(status)
+  */
   
   
   let filesMetadata = Array(maxFiles)
   for(index = 0; index < maxFiles ; index++){
       const json = JSON.parse(fs.readFileSync(`./nft/collection/descriptor_${index}.json`))
 
-      json.image = `ipfs://${cidImages}/{id}`
+      json.image = `ipfs://${fileCID[index]}`
       fs.writeFileSync(`./nft/collection/descriptors/descriptor_${index}.json`, JSON.stringify(json,null,2))
 
       const buffer = await fs.promises.readFile(`./nft/collection/descriptors/descriptor_${index}.json`)
@@ -139,3 +152,6 @@ const maxFiles = 4;
   return statusCidMetadata
 }
 
+
+
+module.exports = useNTFStorage_directory
