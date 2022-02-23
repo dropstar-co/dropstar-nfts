@@ -9,8 +9,11 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155, Ownable {
-
+abstract contract DropStarERC1155withRoyaltyImpl is
+    RoyaltiesV2Impl,
+    ERC1155,
+    Ownable
+{
     using SafeMath for uint256;
 
     /// ERC165 bytes to add to interface array - set in parent contract
@@ -26,34 +29,50 @@ abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155, O
     /// @param _salePrice - the sale price of the NFT asset specified by _tokenId
     /// @return receiver - address of who should be sent the royalty payment
     /// @return royaltyAmount - the royalty payment amount for _salePrice
-    function royaltyInfo(
-        uint256 _tokenId,
-        uint256 _salePrice
-    ) external view returns (
-        address receiver,
-        uint256 royaltyAmount
-    ) { 
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view
+        returns (address receiver, uint256 royaltyAmount)
+    {
         LibPart.Part[] memory _raribleRoyalty = getRaribleV2Royalties(_tokenId);
-        return (_raribleRoyalty[0].account,_salePrice.mul(_raribleRoyalty[0].value).div(10000));        
+        return (
+            _raribleRoyalty[0].account,
+            _salePrice.mul(_raribleRoyalty[0].value).div(10000)
+        );
     }
 
-    function setRoyalties(uint _tokenId, address payable _royaltiesRecipientAddress, uint96 _percentageBasisPoints) public onlyOwner {
+    function setRoyalties(
+        uint256 _tokenId,
+        address payable _royaltiesRecipientAddress,
+        uint96 _percentageBasisPoints
+    ) public onlyOwner {
         LibPart.Part[] memory _royalties = new LibPart.Part[](1);
         _royalties[0].value = _percentageBasisPoints;
         _royalties[0].account = _royaltiesRecipientAddress;
         _saveRoyalties(_tokenId, _royalties);
 
-        emit RoyaltyRecipientChanged(_tokenId,_royaltiesRecipientAddress, _percentageBasisPoints);
+        emit RoyaltyRecipientChanged(
+            _tokenId,
+            _royaltiesRecipientAddress,
+            _percentageBasisPoints
+        );
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override (ERC1155) returns(bool) {
-        return interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ? 
-            true :
-            super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155)
+        returns (bool)
+    {
+        return
+            interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES
+                ? true
+                : super.supportsInterface(interfaceId);
     }
 
     event RoyaltyRecipientChanged(
-        uint _tokenId,
+        uint256 _tokenId,
         address indexed _royaltiesRecipientAddress,
         uint96 _percentageBasisPoints
     );

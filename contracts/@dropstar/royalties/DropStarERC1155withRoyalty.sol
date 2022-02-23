@@ -5,8 +5,7 @@ pragma solidity ^0.8.0;
 import "../../@rarible/royalties/LibPart.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-interface IDropStarERC1155withRoyalty is IERC1155{
-
+interface DropStarERC1155withRoyalty is IERC1155 {
     /// ERC165 bytes to add to interface array - set in parent contract
     /// implementing this standard
     ///
@@ -20,23 +19,18 @@ interface IDropStarERC1155withRoyalty is IERC1155{
     /// @param _salePrice - the sale price of the NFT asset specified by _tokenId
     /// @return receiver - address of who should be sent the royalty payment
     /// @return royaltyAmount - the royalty payment amount for _salePrice
-    function royaltyInfo(
-        uint256 _tokenId,
-        uint256 _salePrice
-    ) external view returns (
-        address receiver,
-        uint256 royaltyAmount
-    );
+    function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
+        external
+        view
+        returns (address receiver, uint256 royaltyAmount);
 
-    function getRaribleV2Royalties(
-        uint256 id
-    ) external view returns (
-        LibPart.Part[] memory
-    );
+    function getRaribleV2Royalties(uint256 id)
+        external
+        view
+        returns (LibPart.Part[] memory);
 
     struct Part {
         address payable account;
         uint96 value;
     }
-
 }
