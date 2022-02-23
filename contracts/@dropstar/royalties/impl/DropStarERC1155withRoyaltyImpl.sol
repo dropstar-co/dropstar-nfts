@@ -42,6 +42,8 @@ abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155, O
         _royalties[0].value = _percentageBasisPoints;
         _royalties[0].account = _royaltiesRecipientAddress;
         _saveRoyalties(_tokenId, _royalties);
+
+        emit RoyaltyRecipientChanged(_tokenId,_royaltiesRecipientAddress, _percentageBasisPoints);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override (ERC1155) returns(bool) {
@@ -49,4 +51,10 @@ abstract contract  DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, ERC1155, O
             true :
             super.supportsInterface(interfaceId);
     }
+
+    event RoyaltyRecipientChanged(
+        uint _tokenId,
+        address indexed _royaltiesRecipientAddress,
+        uint96 _percentageBasisPoints
+    );
 }

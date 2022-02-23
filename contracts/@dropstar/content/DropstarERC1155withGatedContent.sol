@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "../../@rarible/royalties/LibPart.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface IDropStarERC1155withRoyalty is IERC1155{
+interface DropstarERC1155withGatedContent is IERC1155{
 
     /// ERC165 bytes to add to interface array - set in parent contract
     /// implementing this standard
@@ -27,16 +27,5 @@ interface IDropStarERC1155withRoyalty is IERC1155{
         address receiver,
         uint256 royaltyAmount
     );
-
-    function getRaribleV2Royalties(
-        uint256 id
-    ) external view returns (
-        LibPart.Part[] memory
-    );
-
-    struct Part {
-        address payable account;
-        uint96 value;
-    }
 
 }

@@ -43,9 +43,9 @@ async function main() {
 
   console.log("Sending to dropstarDeveloper")
 
-  await dropStarERC1155.mint(deployer.address, 0,1,metadataURI, calldata);
-  await dropStarERC1155.mint(deployer.address, 1,10, metadataURI,calldata);
-  await dropStarERC1155.mint(deployer.address, 2,20, metadataURI,calldata);
+  await dropStarERC1155.mint(deployer.address, 0,amount,  metadataURI, calldata);
+  await dropStarERC1155.mint(deployer.address, 1,amount, metadataURI,calldata);
+  await dropStarERC1155.mint(deployer.address, 2,amount, metadataURI,calldata);
 
 }
 
