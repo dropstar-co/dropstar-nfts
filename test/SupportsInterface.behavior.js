@@ -73,6 +73,11 @@ const INTERFACES = {
     'getURIGatedContent(uint256)',
     'setURIGatedContent(uint256,string[])',
   ],
+  DropStarERC1155withRoyalty: [
+    'royaltyInfo(uint256,uint256)',
+    'setRoyalties(uint256,address,uint96)',
+    'getRaribleV2Royalties(uint256)',
+  ],
 }
 
 const INTERFACE_IDS = {}

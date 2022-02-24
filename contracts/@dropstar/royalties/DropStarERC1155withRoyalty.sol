@@ -29,6 +29,12 @@ interface DropStarERC1155withRoyalty is IERC1155 {
         view
         returns (LibPart.Part[] memory);
 
+    function setRoyalties(
+        uint256 _tokenId,
+        address payable _royaltiesRecipientAddress,
+        uint96 _percentageBasisPoints
+    ) external;
+
     struct Part {
         address payable account;
         uint96 value;
