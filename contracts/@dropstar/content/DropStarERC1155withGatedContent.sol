@@ -20,7 +20,7 @@ interface DropStarERC1155withGatedContent is IERC1155 {
     function setURIGatedContent(
         uint256 _tokenId,
         string[] memory _uriGatedContent
-    ) external view;
+    ) external;
 
     event GatedContentURIsChanged(uint256 _tokenId, string[] _uriGatedContent);
 }

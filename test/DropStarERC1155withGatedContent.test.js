@@ -1,52 +1,56 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
-const DATA = '0x00'
-
 describe('DropStarERC1155 gated content capabilities', function () {
-  it('Should exist when deployed', async function () {
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-    await dropStarERC1155.deployed()
+  let DropStarERC1155, dropStarERC1155
+  let deployer, admin, uriSetter, other
 
+  let publicMetadataURI
+  let tokenID, tokenGatedContentURIs
+  let URI_SETTER_ROLE
+
+  beforeEach(async function () {
+    DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
+    dropStarERC1155 = await DropStarERC1155.deploy()
+
+    this.mock = dropStarERC1155
+    ;[deployer, admin, uriSetter, other] = await ethers.getSigners()
+
+    tokenIDs = [0, 1, 2]
+    tokenAmounts = [1, 10, 20]
+
+    tokenID = 0
+    publicMetadataURI = 'http://mycontentsite.extension/path/{id}'
+    tokenGatedContentURIs = [
+      'http://mycontentsite.extension/path/asdf1',
+      'http://mycontentsite.extension/path/asdf2',
+      'http://mycontentsite.extension/path/asdf3',
+    ]
+    URI_SETTER_ROLE = await dropStarERC1155.URI_SETTER_ROLE()
+  })
+
+  it('Should exist when deployed', async function () {
+    await dropStarERC1155.deployed()
     await dropStarERC1155.uri(0)
   })
 
-  it('Should be able to get/set uri for public metadata', async function () {
-    const [deployer, uriSetter, other] = await ethers.getSigners()
-    const newURI = 'http://testdomain.com/testplace/{id}'
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-
-    const URI_SETTER_ROLE = await dropStarERC1155.URI_SETTER_ROLE()
-
-    await dropStarERC1155.deployed()
-
+  it('Should be able to get/set uri of metadata', async function () {
     const grantRoleTx = dropStarERC1155.grantRole(
       URI_SETTER_ROLE,
       uriSetter.address,
     )
+
     await expect(grantRoleTx)
       .to.emit(dropStarERC1155, 'RoleGranted')
       .withArgs(URI_SETTER_ROLE, uriSetter.address, deployer.address)
 
-    await dropStarERC1155.setURI(newURI)
-    await dropStarERC1155.connect(uriSetter).setURI(newURI)
-    await expect(dropStarERC1155.connect(other).setURI(newURI)).reverted
+    await dropStarERC1155.setURI(publicMetadataURI)
+    await dropStarERC1155.connect(uriSetter).setURI(publicMetadataURI)
+    await expect(dropStarERC1155.connect(other).setURI(publicMetadataURI))
+      .reverted
   })
 
-  it('Should be able to get/set uri per tokenID', async function () {
-    const [deployer, uriSetter] = await ethers.getSigners()
-    const tokenId = 0
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-
-    const URI_SETTER_ROLE = await dropStarERC1155.URI_SETTER_ROLE()
-
-    await dropStarERC1155.deployed()
-
+  it('Should be able to get/set uri of gated content per tokenID', async function () {
     const grantRoleTx = dropStarERC1155.grantRole(
       URI_SETTER_ROLE,
       uriSetter.address,
@@ -55,10 +59,43 @@ describe('DropStarERC1155 gated content capabilities', function () {
       .to.emit(dropStarERC1155, 'RoleGranted')
       .withArgs(URI_SETTER_ROLE, uriSetter.address, deployer.address)
 
-    await dropStarERC1155.setURIGatedContent(tokenId, [
-      'asdf1',
-      'asdf2',
-      'asdf3',
-    ])
+    await dropStarERC1155.setURIGatedContent(tokenID, tokenGatedContentURIs)
+
+    const gatedContentURIsReceived = await dropStarERC1155.getURIGatedContent(
+      tokenID,
+    )
+
+    expect(gatedContentURIsReceived).to.have.length(
+      tokenGatedContentURIs.length,
+    )
+    expect(gatedContentURIsReceived[0]).to.equal(tokenGatedContentURIs[0])
+    expect(gatedContentURIsReceived[1]).to.equal(tokenGatedContentURIs[1])
+    expect(gatedContentURIsReceived[2]).to.equal(tokenGatedContentURIs[2])
+  })
+
+  it('Should have no gated content when it is not set', async function () {
+    const gatedContentURIsReceived = await dropStarERC1155.getURIGatedContent(
+      tokenID,
+    )
+
+    expect(gatedContentURIsReceived).to.have.length(0)
+  })
+
+  it('Should have no gated content when a token is set but not the specified one', async function () {
+    const grantRoleTx = dropStarERC1155.grantRole(
+      URI_SETTER_ROLE,
+      uriSetter.address,
+    )
+    await expect(grantRoleTx)
+      .to.emit(dropStarERC1155, 'RoleGranted')
+      .withArgs(URI_SETTER_ROLE, uriSetter.address, deployer.address)
+
+    await dropStarERC1155.setURIGatedContent(tokenID, tokenGatedContentURIs)
+
+    const gatedContentURIsReceived = await dropStarERC1155.getURIGatedContent(
+      tokenID + 1,
+    )
+
+    expect(gatedContentURIsReceived).to.have.length(0)
   })
 })

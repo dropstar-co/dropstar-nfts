@@ -4,7 +4,7 @@ const DATA = '0x00'
 
 describe('DropStarERC1155 general capabilities', function () {
   let DropStarERC1155, dropStarERC1155
-  let deployer, admin, artist, other
+  let deployer, admin, minter, other
   let MINTER_ROLE
   let tokenID, tokenAmount
   let tokenIDs, tokenAmounts
@@ -17,7 +17,7 @@ describe('DropStarERC1155 general capabilities', function () {
     dropStarERC1155 = await DropStarERC1155.deploy()
 
     this.mock = dropStarERC1155
-    ;[deployer, admin, artist, other] = await ethers.getSigners()
+    ;[deployer, admin, minter, other] = await ethers.getSigners()
 
     MINTER_ROLE = await dropStarERC1155.MINTER_ROLE()
 
@@ -35,37 +35,37 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should allow the artist to mint nfts', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, artist.address)
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
 
     //Validation
     await expect(grantRole)
       .to.emit(dropStarERC1155, 'RoleGranted')
-      .withArgs(MINTER_ROLE, artist.address, deployer.address)
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
 
     await dropStarERC1155
-      .connect(artist)
-      .mint(artist.address, tokenID, tokenAmount, DATA)
+      .connect(minter)
+      .mint(minter.address, tokenID, tokenAmount, DATA)
 
-    expect(await dropStarERC1155.balanceOf(artist.address, tokenID)).to.equal(
+    expect(await dropStarERC1155.balanceOf(minter.address, tokenID)).to.equal(
       tokenAmount,
     )
   })
 
   it('Should allow the artist to mintBatch the nfts', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, artist.address)
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
     await dropStarERC1155
-      .connect(artist)
-      .mintBatch(artist.address, tokenIDs, tokenAmounts, DATA)
+      .connect(minter)
+      .mintBatch(minter.address, tokenIDs, tokenAmounts, DATA)
 
     //Validation
     await expect(grantRole)
       .to.emit(dropStarERC1155, 'RoleGranted')
-      .withArgs(MINTER_ROLE, artist.address, deployer.address)
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
 
     for (let index = 0; index < tokenIDs.length; index++) {
       expect(
-        await dropStarERC1155.balanceOf(artist.address, tokenIDs[index]),
+        await dropStarERC1155.balanceOf(minter.address, tokenIDs[index]),
       ).to.equal(tokenAmounts[index])
     }
   })
