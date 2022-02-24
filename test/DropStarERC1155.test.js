@@ -1,15 +1,6 @@
 const { expect } = require('chai')
-const aaaaa = require('hardhat')
-
-Object.keys(aaaaa)
-
-const { ethers } = aaaaa
-
-const keccak256 = ethers.utils.hashMessage
-
+const { ethers } = require('hardhat')
 const DATA = '0x00'
-
-const { shouldSupportInterfaces } = require('./SupportsInterface.behavior')
 
 describe('DropStarERC1155 general capabilities', function () {
   let DropStarERC1155, dropStarERC1155
@@ -37,18 +28,8 @@ describe('DropStarERC1155 general capabilities', function () {
     tokenAmount = 1
   })
 
-  shouldSupportInterfaces([
-    'ERC721',
-    'ERC721Enumerable',
-    'AccessControl',
-    'AccessControlEnumerable',
-  ])
-
   it('Should exist when deployed', async function () {
-    console.log(Object.keys(aaaaa))
-
     await dropStarERC1155.deployed()
-
     await dropStarERC1155.uri(0)
   })
 
@@ -110,12 +91,6 @@ describe('DropStarERC1155 general capabilities', function () {
   })
 
   it('Should support all interfaces', async function () {
-    const erc2981 = keccak256('getRaribleV2Royalties(uint256)') // == 0xcad96cca
-
-    console.log(erc2981)
-    console.log(0xcad96cca)
-    console.log('0xcad96cca')
-
     //Execution
     const mintTx = dropStarERC1155
       .connect(other)

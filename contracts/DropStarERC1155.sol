@@ -12,12 +12,12 @@ import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
 import "./@dropstar/content/DropStarERC1155withGatedContent.sol";
 import "./@dropstar/content/impl/DropStarERC1155withGatedContentImpl.sol";
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 contract DropStarERC1155 is
     DropStarERC1155withRoyaltyImpl,
-    AccessControl,
+    AccessControlEnumerable,
     DropStarERC1155withGatedContentImpl,
     ERC1155Supply
 {
@@ -62,7 +62,7 @@ contract DropStarERC1155 is
             DropStarERC1155withRoyaltyImpl,
             DropStarERC1155withGatedContentImpl,
             ERC1155,
-            AccessControl
+            AccessControlEnumerable
         )
         returns (bool)
     {

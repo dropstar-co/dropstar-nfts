@@ -9,9 +9,12 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
+
 abstract contract DropStarERC1155withRoyaltyImpl is
     RoyaltiesV2Impl,
     ERC1155,
+    ERC2981,
     Ownable
 {
     using SafeMath for uint256;
@@ -32,6 +35,7 @@ abstract contract DropStarERC1155withRoyaltyImpl is
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice)
         external
         view
+        override(ERC2981)
         returns (address receiver, uint256 royaltyAmount)
     {
         LibPart.Part[] memory _raribleRoyalty = getRaribleV2Royalties(_tokenId);
@@ -62,7 +66,7 @@ abstract contract DropStarERC1155withRoyaltyImpl is
         public
         view
         virtual
-        override(ERC1155)
+        override(ERC1155, ERC2981)
         returns (bool)
     {
         return

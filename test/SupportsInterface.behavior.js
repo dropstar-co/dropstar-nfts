@@ -111,13 +111,11 @@ function shouldSupportInterfaces(interfaces = []) {
           const fnSig = FN_SIGNATURES[fnName]
           describe(fnName, function () {
             it('has to be implemented', function () {
-              /*
               expect(
                 this.contractUnderTest.abi.filter(
                   (fn) => fn.signature === fnSig,
                 ).length,
               ).to.equal(1)
-              */
             })
           })
         }

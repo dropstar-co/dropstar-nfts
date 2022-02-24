@@ -11,7 +11,9 @@
   "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-truffle5": "^2.0.4",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
     "@openzeppelin/test-helpers": "^0.5.15",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",
@@ -31,10 +33,11 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.4",
+    "web3": "^1.7.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.4.1",
-    "nft.storage": "^5.2.0"
+    "nft.storage": "^5.2.0",
+    "@openzeppelin/contracts": "^4.5.0"
   }
 }

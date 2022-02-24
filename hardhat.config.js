@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-ethers')
+require('@nomiclabs/hardhat-truffle5')
 require('hardhat-abi-exporter')
 require('solidity-coverage')
 require('hardhat-etherscan-abi')
