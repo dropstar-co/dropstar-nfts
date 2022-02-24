@@ -9,7 +9,7 @@ interface DropStarERC1155withGatedContent is IERC1155 {
     /**
      * Retrieves the list of gatd content uris for each token.
      */
-    function uriGatedContent(uint256 _tokenId)
+    function getURIGatedContent(uint256 _tokenId)
         external
         view
         returns (string[] memory);

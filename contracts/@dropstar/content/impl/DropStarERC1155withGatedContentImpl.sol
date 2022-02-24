@@ -17,6 +17,8 @@ abstract contract DropStarERC1155withGatedContentImpl is
 {
     using SafeMath for uint256;
 
+    mapping(uint256 => string) private gatedContentURIs;
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -30,7 +32,7 @@ abstract contract DropStarERC1155withGatedContentImpl is
                 : super.supportsInterface(interfaceId);
     }
 
-    function uriGatedContent(uint256 _tokenId)
+    function getURIGatedContent(uint256 _tokenId)
         external
         view
         override(DropStarERC1155withGatedContent)

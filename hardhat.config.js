@@ -1,6 +1,8 @@
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-ethers')
 require('hardhat-abi-exporter')
+require('solidity-coverage')
+require('hardhat-etherscan-abi')
 
 const {
   ALCHEMY_API_KEY_MUMBAI,

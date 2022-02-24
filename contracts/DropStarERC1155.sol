@@ -5,8 +5,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import "./@dropstar/royalties/DropStarERC1155withRoyalty.sol";
 import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
+
+import "./@dropstar/content/DropStarERC1155withGatedContent.sol";
 import "./@dropstar/content/impl/DropStarERC1155withGatedContentImpl.sol";
+
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
@@ -61,7 +66,15 @@ contract DropStarERC1155 is
         )
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IERC1155).interfaceId ||
+            interfaceId == type(IERC1155MetadataURI).interfaceId ||
+            interfaceId == type(ERC1155Supply).interfaceId ||
+            interfaceId == type(AccessControl).interfaceId ||
+            interfaceId == type(DropStarERC1155withGatedContent).interfaceId ||
+            interfaceId == type(DropStarERC1155withRoyalty).interfaceId ||
+            interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ||
+            super.supportsInterface(interfaceId);
     }
 
     function _beforeTokenTransfer(
