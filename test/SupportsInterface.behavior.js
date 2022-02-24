@@ -69,6 +69,7 @@ const INTERFACES = {
     'queue(address[],uint256[],bytes[],bytes32)',
   ],
   ERC2981: ['royaltyInfo(uint256,uint256)'],
+  IERC2981: ['royaltyInfo(uint256,uint256)'],
   DropStarERC1155withGatedContent: [
     'getURIGatedContent(uint256)',
     'setURIGatedContent(uint256,string[])',

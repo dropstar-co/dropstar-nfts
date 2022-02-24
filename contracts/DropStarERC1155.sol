@@ -68,11 +68,11 @@ contract DropStarERC1155 is
     {
         return
             interfaceId == type(IERC1155).interfaceId ||
-            interfaceId == type(IERC1155MetadataURI).interfaceId ||
             interfaceId == type(ERC1155Supply).interfaceId ||
             interfaceId == type(AccessControl).interfaceId ||
             interfaceId == type(DropStarERC1155withGatedContent).interfaceId ||
             interfaceId == type(DropStarERC1155withRoyalty).interfaceId ||
+            interfaceId == type(IERC2981).interfaceId ||
             interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ||
             super.supportsInterface(interfaceId);
     }

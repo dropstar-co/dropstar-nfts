@@ -16,7 +16,7 @@ contract('DropStarERC1155', function (accounts) {
   shouldSupportInterfaces([
     'AccessControl',
     'AccessControlEnumerable',
-    'ERC2981',
+    'IERC2981',
     'ERC1155',
     'DropStarERC1155withGatedContent',
     'DropStarERC1155withRoyalty',
