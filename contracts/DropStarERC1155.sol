@@ -16,10 +16,10 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 contract DropStarERC1155 is
+    ERC1155Supply,
     DropStarERC1155withRoyaltyImpl,
-    AccessControlEnumerable,
     DropStarERC1155withGatedContentImpl,
-    ERC1155Supply
+    AccessControlEnumerable
 {
     using SafeMath for uint256;
 

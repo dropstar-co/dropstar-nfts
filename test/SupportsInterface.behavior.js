@@ -69,6 +69,10 @@ const INTERFACES = {
     'queue(address[],uint256[],bytes[],bytes32)',
   ],
   ERC2981: ['royaltyInfo(uint256,uint256)'],
+  DropStarERC1155withGatedContent: [
+    'getURIGatedContent(uint256)',
+    'setURIGatedContent(uint256,string[])',
+  ],
 }
 
 const INTERFACE_IDS = {}
@@ -82,7 +86,7 @@ for (const k of Object.getOwnPropertyNames(INTERFACES)) {
 }
 
 function shouldSupportInterfaces(interfaces = []) {
-  describe('Contract interface', function () {
+  describe('Contract interface ERC165', function () {
     beforeEach(function () {
       this.contractUnderTest =
         this.mock || this.token || this.holder || this.accessControl
@@ -91,32 +95,27 @@ function shouldSupportInterfaces(interfaces = []) {
     for (const k of interfaces) {
       const interfaceId = INTERFACE_IDS[k]
       describe(k, function () {
-        describe("ERC165's supportsInterface(bytes4)", function () {
-          it('uses less than 30k gas', async function () {
-            expect(
-              await this.contractUnderTest.supportsInterface.estimateGas(
-                interfaceId,
-              ),
-            ).to.be.lte(30000)
-          })
+        it("ERC165's supportsInterface(bytes4) uses less than 30k gas", async function () {
+          expect(
+            await this.contractUnderTest.supportsInterface.estimateGas(
+              interfaceId,
+            ),
+          ).to.be.lte(30000)
+        })
 
-          it('claims support', async function () {
-            expect(
-              await this.contractUnderTest.supportsInterface(interfaceId),
-            ).to.equal(true)
-          })
+        it("ERC165's supportsInterface(bytes4) claims support", async function () {
+          expect(
+            await this.contractUnderTest.supportsInterface(interfaceId),
+          ).to.equal(true)
         })
 
         for (const fnName of INTERFACES[k]) {
           const fnSig = FN_SIGNATURES[fnName]
-          describe(fnName, function () {
-            it('has to be implemented', function () {
-              expect(
-                this.contractUnderTest.abi.filter(
-                  (fn) => fn.signature === fnSig,
-                ).length,
-              ).to.equal(1)
-            })
+          it(fnName + 'has to be implemented', function () {
+            expect(
+              this.contractUnderTest.abi.filter((fn) => fn.signature === fnSig)
+                .length,
+            ).to.equal(1)
           })
         }
       })
