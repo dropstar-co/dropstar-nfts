@@ -4,11 +4,13 @@ require('@nomiclabs/hardhat-truffle5')
 require('hardhat-abi-exporter')
 require('solidity-coverage')
 require('hardhat-etherscan-abi')
+require('hardhat-gas-reporter')
 
 const {
   ALCHEMY_API_KEY_MUMBAI,
   ALCHEMY_API_KEY_MAINNET,
   DEPLOYER_PRIVATE_KEY,
+  COINMARKETCAP_KEY,
 } = require('./.env.js')
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -44,5 +46,11 @@ module.exports = {
       url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY_MAINNET}`,
       accounts: [`${DEPLOYER_PRIVATE_KEY}`],
     },
+  },
+  gasReporter: {
+    currency: 'EUR',
+    gasPrice: 100,
+    coinmarketcap: COINMARKETCAP_KEY,
+    token: 'MATIC',
   },
 }
