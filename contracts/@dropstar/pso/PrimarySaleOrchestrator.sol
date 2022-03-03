@@ -28,14 +28,30 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         address _bidWinner,
         uint256 _startDate,
         uint256 _deadline,
-        bytes32 _signature,
         bytes32 r,
         bytes32 s,
         uint8 v
     ) public payable {
         DropStarERC1155 tokenContract = DropStarERC1155(_tokenAddress);
 
-        //require(tokenContract.isApprovedForAll(_holderAddress, address(this)));
+        require(
+            tokenContract.isApprovedForAll(_holderAddress, address(this)),
+            "ERR1"
+        );
+
+        uint256[] memory tokenIds = new uint256[](1);
+        uint256[] memory amounts = new uint256[](1);
+
+        tokenIds[0] = _tokenId;
+        amounts[0] = 1;
+
+        tokenContract.safeBatchTransferFrom(
+            _holderAddress,
+            _bidWinner,
+            tokenIds,
+            amounts,
+            "0x00"
+        );
 
         //require(_bidWinner == msg.sender);
     }

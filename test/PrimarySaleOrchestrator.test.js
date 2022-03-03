@@ -9,6 +9,9 @@ describe('PrimarySaleOrchestrator', function () {
   let dropStarERC1155
   let deployer, holder, bidWinner
 
+  let _amount = 1
+  let _calldata = '0x00'
+
   let _tokenAddress,
     _tokenId,
     _holderAddress,
@@ -51,6 +54,8 @@ describe('PrimarySaleOrchestrator', function () {
       _startDate,
       _deadline,
     )
+
+    await dropStarERC1155.mint(holder.address, _tokenId, _amount, _calldata)
   })
 
   async function sign(
@@ -129,8 +134,25 @@ describe('PrimarySaleOrchestrator', function () {
   it('Should exist when deployed', async function () {
     await primarySaleOrchestrator.deployed()
   })
+
+  it('Should fulfill a prepared bid', async function () {
+    const result = await primarySaleOrchestrator.fulfillBid(
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _startDate,
+      _deadline,
+      _signature.r,
+      _signature.s,
+      _signature.v,
+    )
+  })
   /*
   it('Should fulfill a prepared bid', async function () {
+
+
     fail('TODO')
     
     const tokenID = 0

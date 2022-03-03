@@ -94,7 +94,17 @@ async function useNTFStorage_directoryExample(data, storage) {
   console.log(status)
 }
 
-async function useNTFStorage_directory(storage) {
+async function useNTFStorage_directory(
+  nftStorage,
+  imageDirectory,
+  metadataDirectory,
+) {
+  if (imageDirectory === undefined) throw 'Must define the sourceDirectory'
+  console.log({ sourceDirectory: imageDirectory })
+  const readdirResults = await fs.promises.readdir(imageDirectory)
+
+  console.log(readdirResults)
+
   /*
   let range = n => [...Array(n).keys()]
 
@@ -104,18 +114,20 @@ async function useNTFStorage_directory(storage) {
     return new File([buffer],"0".repeat(63)+index)
   })
 */
-  const maxFiles = 4
+  const maxFiles = readdirResults.length
 
   let fileCID = Array(maxFiles)
   let files = Array(maxFiles)
   for (index = 0; index < maxFiles; index++) {
-    const buffer = await fs.promises.readFile(`./nft/collection/${index}`)
+    const buffer = await fs.promises.readFile(
+      imageDirectory + '/' + readdirResults[index],
+    )
     files[index] = new File([buffer], '0'.repeat(63) + index)
 
-    const cid = await storage.storeBlob(new Blob([buffer]))
+    const cid = await nftStorage.storeBlob(new Blob([buffer]))
 
     console.log({ cid })
-    const status = await storage.status(cid)
+    const status = await nftStorage.status(cid)
     console.log(status)
 
     fileCID[index] = cid
@@ -131,9 +143,14 @@ async function useNTFStorage_directory(storage) {
 
   let filesMetadata = Array(maxFiles)
   for (index = 0; index < maxFiles; index++) {
-    const json = JSON.parse(
-      fs.readFileSync(`./nft/collection/descriptor_${index}.json`),
-    )
+    const filename = metadataDirectory + '/' + readdirResults[index] + '.json'
+    console.log({ filename })
+    const content = fs.readFileSync(filename)
+
+    console.log({ content })
+    const json = JSON.parse(content)
+
+    console.log({ json })
 
     json.image = `ipfs://${fileCID[index]}`
     fs.writeFileSync(
@@ -147,10 +164,10 @@ async function useNTFStorage_directory(storage) {
     filesMetadata[index] = new File([buffer], '0'.repeat(63) + index)
   }
 
-  const cidMetadata = await storage.storeDirectory(filesMetadata)
+  const cidMetadata = await nftStorage.storeDirectory(filesMetadata)
   console.log({ cidMetadata })
 
-  const statusCidMetadata = await storage.status(cidMetadata)
+  const statusCidMetadata = await nftStorage.status(cidMetadata)
   console.log(statusCidMetadata)
 
   // As we need the cids of the images for the descriptors, we are recreating the metadata files.

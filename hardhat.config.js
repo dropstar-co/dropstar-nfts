@@ -9,6 +9,7 @@ require('hardhat-gas-reporter')
 const {
   ALCHEMY_API_KEY_MUMBAI,
   ALCHEMY_API_KEY_MAINNET,
+  ALCHEMY_API_KEY_POLYGON,
   DEPLOYER_PRIVATE_KEY,
   COINMARKETCAP_KEY,
 } = require('./.env.js')
@@ -42,8 +43,8 @@ module.exports = {
       url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY_MUMBAI}`,
       accounts: [`${DEPLOYER_PRIVATE_KEY}`],
     },
-    ethereum: {
-      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY_MAINNET}`,
+    polygon: {
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_POLYGON}`,
       accounts: [`${DEPLOYER_PRIVATE_KEY}`],
     },
   },
