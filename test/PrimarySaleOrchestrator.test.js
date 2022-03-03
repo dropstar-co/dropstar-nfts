@@ -14,8 +14,9 @@ describe('PrimarySaleOrchestrator', function () {
     _holderAddress,
     _price,
     _bidWinner,
-    _signature,
-    _deadline
+    _startDate,
+    _deadline,
+    _signature
 
   beforeEach(async function () {
     const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
@@ -37,6 +38,7 @@ describe('PrimarySaleOrchestrator', function () {
     _holderAddress = holder.address
     _bidWinner = bidWinner.address
     _price = 60
+    _startDate = 123000
     _deadline = 123456
 
     _signature = await sign(
@@ -46,6 +48,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _startDate,
       _deadline,
     )
   })
@@ -57,16 +60,9 @@ describe('PrimarySaleOrchestrator', function () {
     _holderAddress,
     _price,
     _bidWinner,
+    _startDate,
     _deadline,
   ) {
-    // address _tokenAddress,
-    // uint256 _tokenId,
-    // address _holderAddress,
-    // uint256 _price,
-    // address _bidWinner,
-    // bytes32 _signature,
-    // uint256 _deadline
-
     let msgHash1 = await soliditySha3(
       {
         type: 'address',
@@ -75,15 +71,24 @@ describe('PrimarySaleOrchestrator', function () {
       { type: 'uint256', value: _tokenId },
     )
 
-    const msgHash2 = await primarySaleOrchestrator.doHash(
+    console.log('doHash')
+    console.log({
       _tokenAddress,
       _tokenId,
-      /*
       _holderAddress,
       _price,
       _bidWinner,
+      _startDate,
       _deadline,
-      */
+    })
+    const msgHash2 = await primarySaleOrchestrator.doHash(
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _startDate,
+      _deadline,
     )
 
     console.log({ msgHash1, msgHash2 })

@@ -10,17 +10,25 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "../../DropStarERC1155.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-contract PrimarySaleOrchestrator is Ownable {
+contract PrimarySaleOrchestrator is Ownable, EIP712 {
     using ECDSA for bytes32;
     using SafeMath for uint256;
 
     mapping(bytes32 => bool) public hashUsed;
 
-    constructor() {}
+    constructor() EIP712("DropStar", "1.0.0") {}
 
     function fulfillBid(
         address _tokenAddress,
+        uint256 _tokenId,
+        address _holderAddress,
+        uint256 _price,
+        address _bidWinner,
+        uint256 _startDate,
+        uint256 _deadline,
+        bytes32 _signature,
         bytes32 r,
         bytes32 s,
         uint8 v
@@ -32,12 +40,27 @@ contract PrimarySaleOrchestrator is Ownable {
         //require(_bidWinner == msg.sender);
     }
 
-    function doHash(address _tokenAddress, uint256 _tokenId)
-        external
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(_tokenAddress, _tokenId));
+    function doHash(
+        address _tokenAddress,
+        uint256 _tokenId,
+        address _holderAddress,
+        uint256 _price,
+        address _bidWinner,
+        uint256 _startDate,
+        uint256 _deadline
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    _tokenAddress,
+                    _tokenId,
+                    _holderAddress,
+                    _price,
+                    _bidWinner,
+                    _startDate,
+                    _deadline
+                )
+            );
     }
 
     function recover(
