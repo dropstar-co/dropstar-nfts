@@ -1,47 +1,21 @@
 const { fail } = require('assert')
 const { expect } = require('chai')
-const { ethers } = require('hardhat')
+//const { ethers } = require('hardhat')
 
-const { BN, soliditySha3, soliditySha3Raw } = require('web3-utils')
-
-async function sign(
-  _tokenAddress,
-  _tokenId,
-  _holderAddress,
-  _price,
-  _bidWinner,
-) {
-  // address _tokenAddress,
-  // uint256 _tokenId,
-  // address _holderAddress,
-  // uint256 _price,
-  // address _bidWinner,
-  // bytes32 _signature
-  const signatureRaw = await soliditySha3Raw(
-    { type: 'address', value: _tokenAddress },
-    { type: 'uint256', value: _tokenId },
-    { type: 'address', value: _holderAddress },
-    { type: 'uint256', value: _price },
-    { type: 'address', value: _bidWinner },
-  )
-
-  const signature = await soliditySha3(
-    { type: 'address', value: _tokenAddress },
-    { type: 'uint256', value: _tokenId },
-    { type: 'address', value: _holderAddress },
-    { type: 'uint256', value: _price },
-    { type: 'address', value: _bidWinner },
-  )
-  console.log({ signature, signatureRaw })
-  return signature
-}
+const { BN, soliditySha3 } = require('web3-utils')
 
 describe('PrimarySaleOrchestrator', function () {
   let primarySaleOrchestrator
   let dropStarERC1155
   let deployer, holder, bidWinner
 
-  let _tokenAddress, _tokenId, _holderAddress, _price, _bidWinner, _signature
+  let _tokenAddress,
+    _tokenId,
+    _holderAddress,
+    _price,
+    _bidWinner,
+    _signature,
+    _deadline
 
   beforeEach(async function () {
     const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
@@ -52,6 +26,9 @@ describe('PrimarySaleOrchestrator', function () {
     )
     primarySaleOrchestrator = await PrimarySaleOrchestrator.deploy()
 
+    await dropStarERC1155.deployed()
+    await primarySaleOrchestrator.deployed()
+
     this.mock = primarySaleOrchestrator
     ;[deployer, holder, bidWinner] = await ethers.getSigners()
 
@@ -59,24 +36,98 @@ describe('PrimarySaleOrchestrator', function () {
     _tokenId = 0
     _holderAddress = holder.address
     _bidWinner = bidWinner.address
-    _price = '60'
+    _price = 60
+    _deadline = 123456
 
     _signature = await sign(
+      deployer,
       _tokenAddress,
       _tokenId,
       _holderAddress,
       _price,
       _bidWinner,
+      _deadline,
     )
   })
+
+  async function sign(
+    signer,
+    _tokenAddress,
+    _tokenId,
+    _holderAddress,
+    _price,
+    _bidWinner,
+    _deadline,
+  ) {
+    // address _tokenAddress,
+    // uint256 _tokenId,
+    // address _holderAddress,
+    // uint256 _price,
+    // address _bidWinner,
+    // bytes32 _signature,
+    // uint256 _deadline
+
+    let msgHash1 = await soliditySha3(
+      {
+        type: 'address',
+        value: _tokenAddress,
+      },
+      { type: 'uint256', value: _tokenId },
+    )
+
+    const msgHash2 = await primarySaleOrchestrator.doHash(
+      _tokenAddress,
+      _tokenId,
+      /*
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _deadline,
+      */
+    )
+
+    console.log({ msgHash1, msgHash2 })
+
+    // Sign the binary data
+    let signature = await signer.signMessage(ethers.utils.arrayify(msgHash1))
+
+    const ethersutilsverifyMessage = ethers.utils.verifyMessage(
+      ethers.utils.arrayify(msgHash1),
+      signature,
+    )
+
+    // For Solidity, we need the expanded-format of a signature
+    let signatureSplit = ethers.utils.splitSignature(signature)
+    const primarySaleOrchestratorrecover =
+      await primarySaleOrchestrator.recover(
+        msgHash1,
+        signatureSplit.v,
+        signatureSplit.r,
+        signatureSplit.s,
+      )
+
+    console.log('end')
+
+    const address1 = deployer.address
+    const address2 = ethersutilsverifyMessage
+    const address3 = primarySaleOrchestratorrecover
+
+    console.log({
+      address1,
+      address2,
+      address3,
+    })
+
+    return signatureSplit
+  }
 
   it('Should exist when deployed', async function () {
     await primarySaleOrchestrator.deployed()
   })
-
+  /*
   it('Should fulfill a prepared bid', async function () {
     fail('TODO')
-    /*
+    
     const tokenID = 0
     const amount = 1
     const calldata = '0x00'
@@ -92,18 +143,11 @@ describe('PrimarySaleOrchestrator', function () {
     const result = await dropStarERC1155.royaltyInfo(tokenID, salePrice)
 
     expect(result.royaltyAmount.toString()).to.equal(royaltyAmountExpected)
-    */
+    
   })
 
+  /*
   it('Should fail when it has no allowance', async function () {
-    console.log({
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _signature,
-    })
     await primarySaleOrchestrator.fulfillBid(
       _tokenAddress,
       _tokenId,
@@ -113,4 +157,5 @@ describe('PrimarySaleOrchestrator', function () {
       _signature,
     )
   })
+    */
 })
