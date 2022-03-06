@@ -25,7 +25,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         uint256 _tokenId,
         address _holderAddress,
         uint256 _price,
-        address _bidWinner,
+        address payable _bidWinner,
         uint256 _startDate,
         uint256 _deadline,
         bytes32 r,
@@ -52,7 +52,10 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
             "0x00"
         );
 
-        //require(_bidWinner == msg.sender);
+        require(_bidWinner == msg.sender, "ERR3");
+
+        (bool sent, bytes memory data) = _bidWinner.call{value: msg.value}("");
+        require(sent, "ERR4");
     }
 
     function doHash(
@@ -86,5 +89,35 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
     ) public pure returns (address) {
         bytes32 ethHash = _message.toEthSignedMessageHash();
         return ethHash.recover(v, r, s);
+    }
+
+    /*
+    Which function is called, fallback() or receive()?
+
+           send Ether
+               |
+         msg.data is empty?
+              / \
+            yes  no
+            /     \
+receive() exists?  fallback()
+         /   \
+        yes   no
+        /      \
+    receive()   fallback()
+    */
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {
+        revert("ERR0");
+    }
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {
+        revert("ERR0");
+    }
+
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 }

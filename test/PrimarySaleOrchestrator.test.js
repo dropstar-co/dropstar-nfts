@@ -1,6 +1,9 @@
 const { fail } = require('assert')
 const { expect } = require('chai')
-const { ethers, waffle } = require('hardhat')
+const { ethers } = require('hardhat')
+const { provider } = ethers
+
+const { formatEther } = ethers.utils
 
 const { BN, soliditySha3 } = require('web3-utils')
 
@@ -41,8 +44,8 @@ describe('PrimarySaleOrchestrator', function () {
     _tokenId = 0
     _holderAddress = holder.address
     _bidWinner = bidWinner.address
-    _price = 60
-    _priceNotEnough = 59
+    _price = ethers.utils.parseUnits('60', 'ether')
+    _priceNotEnough = ethers.utils.parseUnits('59', 'ether')
     _startDate = 123000
     _deadline = 123456
 
@@ -78,16 +81,6 @@ describe('PrimarySaleOrchestrator', function () {
       { type: 'uint256', value: _tokenId },
     )
 
-    console.log('doHash')
-    console.log({
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _startDate,
-      _deadline,
-    })
     const msgHash2 = await primarySaleOrchestrator.doHash(
       _tokenAddress,
       _tokenId,
@@ -97,8 +90,6 @@ describe('PrimarySaleOrchestrator', function () {
       _startDate,
       _deadline,
     )
-
-    console.log({ msgHash1, msgHash2 })
 
     // Sign the binary data
     let signature = await signer.signMessage(ethers.utils.arrayify(msgHash1))
@@ -118,18 +109,6 @@ describe('PrimarySaleOrchestrator', function () {
         signatureSplit.s,
       )
 
-    console.log('end')
-
-    const address1 = deployer.address
-    const address2 = ethersutilsverifyMessage
-    const address3 = primarySaleOrchestratorrecover
-
-    console.log({
-      address1,
-      address2,
-      address3,
-    })
-
     return signatureSplit
   }
 
@@ -141,6 +120,59 @@ describe('PrimarySaleOrchestrator', function () {
     const allowanceResult = await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const initialBalance = await provider.getBalance(holder.address)
+    const initialBalance_BidWinner = await provider.getBalance(
+      bidWinner.address,
+    )
+
+    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _startDate,
+      _deadline,
+      _signature.r,
+      _signature.s,
+      _signature.v,
+
+      { value: _price },
+    )
+
+    await result
+
+    const finalBalance = await provider.getBalance(holder.address)
+    const finalBalance_BidWinner = await provider.getBalance(bidWinner.address)
+
+    console.log({
+      initiBalance_BidWinner: formatEther(initialBalance_BidWinner),
+      finalBalance_BidWinner: formatEther(finalBalance_BidWinner),
+    })
+
+    console.log({
+      initiBalance: formatEther(initialBalance),
+      finalBalance: formatEther(finalBalance),
+    })
+    console.log({
+      _price: formatEther(_price),
+      initiBalance: formatEther(initialBalance),
+      finalBalance: formatEther(finalBalance),
+      compuBalance: formatEther(initialBalance.add(_price)),
+    })
+
+    expect(formatEther(finalBalance)).to.equal(
+      formatEther(initialBalance.add(_price)),
+    )
+  })
+
+  it('Should revert if the caller is not the bid winner', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const initialBalance = await provider.getBalance(holder.address)
 
     const result = primarySaleOrchestrator.fulfillBid(
       _tokenAddress,
@@ -154,10 +186,10 @@ describe('PrimarySaleOrchestrator', function () {
       _signature.s,
       _signature.v,
 
-      { value: 9999 },
+      { value: _price },
     )
 
-    await result
+    expect(result).revertedWith('ERR3')
   })
 
   it('Should revert when there is not enough native token payed to the SC', async function () {
