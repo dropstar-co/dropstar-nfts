@@ -32,12 +32,11 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         bytes32 s,
         uint8 v
     ) public payable {
-        DropStarERC1155 tokenContract = DropStarERC1155(_tokenAddress);
+        DropStarERC1155 nft = DropStarERC1155(_tokenAddress);
 
-        require(
-            tokenContract.isApprovedForAll(_holderAddress, address(this)),
-            "ERR1"
-        );
+        require(nft.isApprovedForAll(_holderAddress, address(this)), "ERR1");
+
+        require(msg.value >= _price, "ERR2");
 
         uint256[] memory tokenIds = new uint256[](1);
         uint256[] memory amounts = new uint256[](1);
@@ -45,7 +44,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         tokenIds[0] = _tokenId;
         amounts[0] = 1;
 
-        tokenContract.safeBatchTransferFrom(
+        nft.safeBatchTransferFrom(
             _holderAddress,
             _bidWinner,
             tokenIds,

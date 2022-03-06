@@ -1,6 +1,6 @@
 const { fail } = require('assert')
 const { expect } = require('chai')
-//const { ethers } = require('hardhat')
+const { ethers, waffle } = require('hardhat')
 
 const { BN, soliditySha3 } = require('web3-utils')
 
@@ -15,6 +15,7 @@ describe('PrimarySaleOrchestrator', function () {
   let _tokenAddress,
     _tokenId,
     _holderAddress,
+    _priceNotEnough,
     _price,
     _bidWinner,
     _startDate,
@@ -41,6 +42,7 @@ describe('PrimarySaleOrchestrator', function () {
     _holderAddress = holder.address
     _bidWinner = bidWinner.address
     _price = 60
+    _priceNotEnough = 59
     _startDate = 123000
     _deadline = 123456
 
@@ -135,8 +137,58 @@ describe('PrimarySaleOrchestrator', function () {
     await primarySaleOrchestrator.deployed()
   })
 
-  it('Should fulfill a prepared bid', async function () {
-    const result = await primarySaleOrchestrator.fulfillBid(
+  it('TODO', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.fulfillBid(
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _startDate,
+      _deadline,
+      _signature.r,
+      _signature.s,
+      _signature.v,
+
+      { value: 9999 },
+    )
+
+    await result
+  })
+
+  it('Should revert when there is not enough native token payed to the SC', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.fulfillBid(
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinner,
+      _startDate,
+      _deadline,
+      _signature.r,
+      _signature.s,
+      _signature.v,
+
+      { value: _priceNotEnough },
+    )
+
+    expect(result).revertedWith('ERR2')
+  })
+
+  it('Should revert when there is no native token payed to the SC', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    result = primarySaleOrchestrator.fulfillBid(
       _tokenAddress,
       _tokenId,
       _holderAddress,
@@ -148,41 +200,24 @@ describe('PrimarySaleOrchestrator', function () {
       _signature.s,
       _signature.v,
     )
-  })
-  /*
-  it('Should fulfill a prepared bid', async function () {
 
-
-    fail('TODO')
-    
-    const tokenID = 0
-    const amount = 1
-    const calldata = '0x00'
-    const salePrice = 100
-    const royaltyAmountExpected = '10'
-    const royaltyPercentPoints = 10 * 100
-    await dropStarERC1155.mint(deployer.address, tokenID, amount, calldata)
-    await dropStarERC1155.setRoyalties(
-      tokenID,
-      deployer.address,
-      royaltyPercentPoints,
-    )
-    const result = await dropStarERC1155.royaltyInfo(tokenID, salePrice)
-
-    expect(result.royaltyAmount.toString()).to.equal(royaltyAmountExpected)
-    
+    expect(result).revertedWith('ERR2')
   })
 
-  /*
-  it('Should fail when it has no allowance', async function () {
-    await primarySaleOrchestrator.fulfillBid(
+  it('Should revert when the contract has no allowance for moving the NFT from the holder', async function () {
+    const result = primarySaleOrchestrator.fulfillBid(
       _tokenAddress,
       _tokenId,
       _holderAddress,
       _price,
       _bidWinner,
-      _signature,
+      _startDate,
+      _deadline,
+      _signature.r,
+      _signature.s,
+      _signature.v,
     )
+
+    expect(result).revertedWith('ERR1')
   })
-    */
 })
