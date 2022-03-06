@@ -21,6 +21,7 @@ describe('PrimarySaleOrchestrator', function () {
     _priceNotEnough,
     _price,
     _bidWinner,
+    _paymentRecipientAddress,
     _startDate,
     _deadline,
     _signature
@@ -38,7 +39,7 @@ describe('PrimarySaleOrchestrator', function () {
     await primarySaleOrchestrator.deployed()
 
     this.mock = primarySaleOrchestrator
-    ;[deployer, holder, bidWinner] = await ethers.getSigners()
+    ;[deployer, holder, bidWinner, paymentRecipient] = await ethers.getSigners()
 
     _tokenAddress = dropStarERC1155.address
     _tokenId = 0
@@ -48,6 +49,7 @@ describe('PrimarySaleOrchestrator', function () {
     _priceNotEnough = ethers.utils.parseUnits('59', 'ether')
     _startDate = 123000
     _deadline = 123456
+    _paymentRecipientAddress = paymentRecipient.address
 
     _signature = await sign(
       deployer,
@@ -56,6 +58,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
     )
@@ -69,7 +72,8 @@ describe('PrimarySaleOrchestrator', function () {
     _tokenId,
     _holderAddress,
     _price,
-    _bidWinner,
+    _bidWinnerAddress,
+    _paymentRecipientAddress,
     _startDate,
     _deadline,
   ) {
@@ -86,7 +90,8 @@ describe('PrimarySaleOrchestrator', function () {
       _tokenId,
       _holderAddress,
       _price,
-      _bidWinner,
+      _bidWinnerAddress,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
     )
@@ -121,10 +126,7 @@ describe('PrimarySaleOrchestrator', function () {
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
-    const initialBalance = await provider.getBalance(holder.address)
-    const initialBalance_BidWinner = await provider.getBalance(
-      bidWinner.address,
-    )
+    const initialBalance = await provider.getBalance(paymentRecipient.address)
 
     const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
       _tokenAddress,
@@ -132,6 +134,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
       _signature.r,
@@ -143,24 +146,7 @@ describe('PrimarySaleOrchestrator', function () {
 
     await result
 
-    const finalBalance = await provider.getBalance(holder.address)
-    const finalBalance_BidWinner = await provider.getBalance(bidWinner.address)
-
-    console.log({
-      initiBalance_BidWinner: formatEther(initialBalance_BidWinner),
-      finalBalance_BidWinner: formatEther(finalBalance_BidWinner),
-    })
-
-    console.log({
-      initiBalance: formatEther(initialBalance),
-      finalBalance: formatEther(finalBalance),
-    })
-    console.log({
-      _price: formatEther(_price),
-      initiBalance: formatEther(initialBalance),
-      finalBalance: formatEther(finalBalance),
-      compuBalance: formatEther(initialBalance.add(_price)),
-    })
+    const finalBalance = await provider.getBalance(paymentRecipient.address)
 
     expect(formatEther(finalBalance)).to.equal(
       formatEther(initialBalance.add(_price)),
@@ -180,6 +166,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
       _signature.r,
@@ -203,6 +190,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
       _signature.r,
@@ -226,6 +214,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
       _signature.r,
@@ -243,6 +232,7 @@ describe('PrimarySaleOrchestrator', function () {
       _holderAddress,
       _price,
       _bidWinner,
+      _paymentRecipientAddress,
       _startDate,
       _deadline,
       _signature.r,

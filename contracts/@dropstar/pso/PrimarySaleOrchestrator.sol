@@ -23,9 +23,10 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
     function fulfillBid(
         address _tokenAddress,
         uint256 _tokenId,
-        address _holderAddress,
+        address _holder,
         uint256 _price,
-        address payable _bidWinner,
+        address _bidWinner,
+        address payable _paymentRecipient,
         uint256 _startDate,
         uint256 _deadline,
         bytes32 r,
@@ -34,7 +35,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
     ) public payable {
         DropStarERC1155 nft = DropStarERC1155(_tokenAddress);
 
-        require(nft.isApprovedForAll(_holderAddress, address(this)), "ERR1");
+        require(nft.isApprovedForAll(_holder, address(this)), "ERR1");
 
         require(msg.value >= _price, "ERR2");
 
@@ -44,18 +45,20 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         tokenIds[0] = _tokenId;
         amounts[0] = 1;
 
+        require(_bidWinner == msg.sender, "ERR3");
+
+        (bool sent, bytes memory data) = _paymentRecipient.call{
+            value: msg.value
+        }("");
+        require(sent, "ERR4");
+
         nft.safeBatchTransferFrom(
-            _holderAddress,
+            _holder,
             _bidWinner,
             tokenIds,
             amounts,
             "0x00"
         );
-
-        require(_bidWinner == msg.sender, "ERR3");
-
-        (bool sent, bytes memory data) = _bidWinner.call{value: msg.value}("");
-        require(sent, "ERR4");
     }
 
     function doHash(
@@ -64,6 +67,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         address _holderAddress,
         uint256 _price,
         address _bidWinner,
+        address _paymentRecipient,
         uint256 _startDate,
         uint256 _deadline
     ) external pure returns (bytes32) {
@@ -75,6 +79,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
                     _holderAddress,
                     _price,
                     _bidWinner,
+                    _paymentRecipient,
                     _startDate,
                     _deadline
                 )
