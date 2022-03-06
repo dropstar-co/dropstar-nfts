@@ -39,10 +39,13 @@ abstract contract DropStarERC1155withRoyaltyImpl is
         returns (address receiver, uint256 royaltyAmount)
     {
         LibPart.Part[] memory _raribleRoyalty = getRaribleV2Royalties(_tokenId);
-        return (
-            _raribleRoyalty[0].account,
-            _salePrice.mul(_raribleRoyalty[0].value).div(10000)
-        );
+
+        if (_raribleRoyalty.length == 0) return (address(0), 0);
+        else
+            return (
+                _raribleRoyalty[0].account,
+                _salePrice.mul(_raribleRoyalty[0].value).div(10000)
+            );
     }
 
     function setRoyalties(
