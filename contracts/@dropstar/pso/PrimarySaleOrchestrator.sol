@@ -47,6 +47,12 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
 
         require(_bidWinner == msg.sender, "ERR3");
 
+        require(_startDate < _deadline, "ERRDATEINVALID");
+
+        require(block.timestamp > _startDate, "ERRDATESOON");
+
+        require(_deadline < block.timestamp, "ERRDATELATE");
+
         (bool sent, bytes memory data) = _paymentRecipient.call{
             value: msg.value
         }("");

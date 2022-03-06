@@ -1,5 +1,6 @@
 const { fail } = require('assert')
 const { expect } = require('chai')
+const { parseUnits } = require('ethers/lib/utils')
 const { ethers } = require('hardhat')
 const { provider } = ethers
 
@@ -15,16 +16,8 @@ describe('PrimarySaleOrchestrator', function () {
   let _amount = 1
   let _calldata = '0x00'
 
-  let _tokenAddress,
-    _tokenId,
-    _holderAddress,
-    _priceNotEnough,
-    _price,
-    _bidWinner,
-    _paymentRecipientAddress,
-    _startDate,
-    _deadline,
-    _signature
+  let cheque, chequeTooOld, chequeTooYoung
+  let _priceNotEnough
 
   beforeEach(async function () {
     const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
@@ -41,29 +34,50 @@ describe('PrimarySaleOrchestrator', function () {
     this.mock = primarySaleOrchestrator
     ;[deployer, holder, bidWinner, paymentRecipient] = await ethers.getSigners()
 
-    _tokenAddress = dropStarERC1155.address
-    _tokenId = 0
-    _holderAddress = holder.address
-    _bidWinner = bidWinner.address
-    _price = ethers.utils.parseUnits('60', 'ether')
-    _priceNotEnough = ethers.utils.parseUnits('59', 'ether')
-    _startDate = 123000
-    _deadline = 123456
-    _paymentRecipientAddress = paymentRecipient.address
+    _priceNotEnough = parseUnits('59', 'ether')
 
-    _signature = await sign(
+    cheque = await sign(
       deployer,
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
+      dropStarERC1155.address,
+      0,
+      holder.address,
+      parseUnits('60', 'ether'),
+      bidWinner.address,
+      paymentRecipient.address,
+      123000,
+      123456,
     )
 
-    await dropStarERC1155.mint(holder.address, _tokenId, _amount, _calldata)
+    chequeTooOld = await sign(
+      deployer,
+      dropStarERC1155.address,
+      0,
+      holder.address,
+      ethers.utils.parseUnits('60', 'ether'),
+      bidWinner.address,
+      paymentRecipient.address,
+      123000,
+      123456,
+    )
+
+    chequeTooYoung = await sign(
+      deployer,
+      dropStarERC1155.address,
+      0,
+      holder.address,
+      ethers.utils.parseUnits('60', 'ether'),
+      bidWinner.address,
+      paymentRecipient.address,
+      123000,
+      123456,
+    )
+
+    await dropStarERC1155.mint(
+      holder.address,
+      0 /*tokenId*/,
+      1 /*amount*/,
+      _calldata,
+    )
   })
 
   async function sign(
@@ -97,24 +111,36 @@ describe('PrimarySaleOrchestrator', function () {
     )
 
     // Sign the binary data
-    let signature = await signer.signMessage(ethers.utils.arrayify(msgHash1))
+    let signatureFull = await signer.signMessage(
+      ethers.utils.arrayify(msgHash1),
+    )
 
     const ethersutilsverifyMessage = ethers.utils.verifyMessage(
       ethers.utils.arrayify(msgHash1),
-      signature,
+      signatureFull,
     )
 
     // For Solidity, we need the expanded-format of a signature
-    let signatureSplit = ethers.utils.splitSignature(signature)
+    let signature = ethers.utils.splitSignature(signatureFull)
     const primarySaleOrchestratorrecover =
       await primarySaleOrchestrator.recover(
         msgHash1,
-        signatureSplit.v,
-        signatureSplit.r,
-        signatureSplit.s,
+        signature.v,
+        signature.r,
+        signature.s,
       )
 
-    return signatureSplit
+    return {
+      _tokenAddress,
+      _tokenId,
+      _holderAddress,
+      _price,
+      _bidWinnerAddress,
+      _paymentRecipientAddress,
+      _startDate,
+      _deadline,
+      _signature: signature,
+    }
   }
 
   it('Should exist when deployed', async function () {
@@ -126,22 +152,24 @@ describe('PrimarySaleOrchestrator', function () {
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
+    console.log({ allowanceResult })
+
     const initialBalance = await provider.getBalance(paymentRecipient.address)
 
     const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
-      _signature.r,
-      _signature.s,
-      _signature.v,
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDateOld,
+      cheque._deadlineOld,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
 
-      { value: _price },
+      { value: cheque._price },
     )
 
     await result
@@ -153,27 +181,73 @@ describe('PrimarySaleOrchestrator', function () {
     )
   })
 
+  it('Should fail when using too late a cheque for finishing the sale', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDateOld,
+      cheque._deadlineOld,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
+
+      { value: cheque._price },
+    )
+
+    expect(result).revertedWith('ERRDATETOOOLD')
+  })
+
+  it('Should fail when using too early a cheque for finishing the sale', async function () {
+    const allowanceResult = await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDateAhead,
+      cheque._deadlineAhead,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
+
+      { value: cheque._price },
+    )
+
+    expect(result).revertedWith('ERRDATETOOEARLY')
+  })
+
   it('Should revert if the caller is not the bid winner', async function () {
     const allowanceResult = await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
-    const initialBalance = await provider.getBalance(holder.address)
-
     const result = primarySaleOrchestrator.fulfillBid(
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
-      _signature.r,
-      _signature.s,
-      _signature.v,
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
 
-      { value: _price },
+      { value: cheque._price },
     )
 
     expect(result).revertedWith('ERR3')
@@ -185,17 +259,17 @@ describe('PrimarySaleOrchestrator', function () {
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
     const result = primarySaleOrchestrator.fulfillBid(
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
-      _signature.r,
-      _signature.s,
-      _signature.v,
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
 
       { value: _priceNotEnough },
     )
@@ -209,17 +283,17 @@ describe('PrimarySaleOrchestrator', function () {
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
     result = primarySaleOrchestrator.fulfillBid(
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
-      _signature.r,
-      _signature.s,
-      _signature.v,
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
     )
 
     expect(result).revertedWith('ERR2')
@@ -227,17 +301,17 @@ describe('PrimarySaleOrchestrator', function () {
 
   it('Should revert when the contract has no allowance for moving the NFT from the holder', async function () {
     const result = primarySaleOrchestrator.fulfillBid(
-      _tokenAddress,
-      _tokenId,
-      _holderAddress,
-      _price,
-      _bidWinner,
-      _paymentRecipientAddress,
-      _startDate,
-      _deadline,
-      _signature.r,
-      _signature.s,
-      _signature.v,
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinner,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+      cheque._signature.r,
+      cheque._signature.s,
+      cheque._signature.v,
     )
 
     expect(result).revertedWith('ERR1')
