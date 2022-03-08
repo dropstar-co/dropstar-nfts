@@ -1,7 +1,7 @@
 const { fail } = require('assert')
 const { expect } = require('chai')
-const { parseUnits } = require('ethers/lib/utils')
-const { ethers } = require('hardhat')
+const { parseUnits, parseEther } = require('ethers/lib/utils')
+const { ethers, network } = require('hardhat')
 const { provider } = ethers
 
 const { formatEther } = ethers.utils
@@ -16,10 +16,27 @@ describe('PrimarySaleOrchestrator', function () {
   let _amount = 1
   let _calldata = '0x00'
 
+  const ONE_DAY = 60 * 60 * 24
+  const ONE_HOUR = 60 * 60
+
   let cheque, chequeTooOld, chequeTooYoung
   let _priceNotEnough
 
+  let currentBlockTimestamp
+
+  async function oneDayAhead() {
+    //https://ethereum.stackexchange.com/questions/86633/time-dependent-tests-with-hardhat
+    await network.provider.send('evm_setNextBlockTimestamp', [
+      currentBlockTimestamp + ONE_DAY,
+    ])
+    await network.provider.send('evm_mine') // this one will have 2021-07-01 12:00 AM as its timestamp, no matter what the previous block has
+  }
+
   beforeEach(async function () {
+    currentBlockTimestamp = parseInt(
+      (await provider.getBlock(await provider.getBlockNumber())).timestamp,
+    )
+
     const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
     dropStarERC1155 = await DropStarERC1155.deploy()
 
@@ -44,8 +61,8 @@ describe('PrimarySaleOrchestrator', function () {
       parseUnits('60', 'ether'),
       bidWinner.address,
       paymentRecipient.address,
-      123000,
-      123456,
+      currentBlockTimestamp - ONE_HOUR,
+      currentBlockTimestamp + ONE_HOUR,
     )
 
     chequeTooOld = await sign(
@@ -56,8 +73,8 @@ describe('PrimarySaleOrchestrator', function () {
       ethers.utils.parseUnits('60', 'ether'),
       bidWinner.address,
       paymentRecipient.address,
-      123000,
-      123456,
+      currentBlockTimestamp - ONE_DAY - ONE_HOUR,
+      currentBlockTimestamp - ONE_DAY + ONE_HOUR,
     )
 
     chequeTooYoung = await sign(
@@ -68,8 +85,8 @@ describe('PrimarySaleOrchestrator', function () {
       ethers.utils.parseUnits('60', 'ether'),
       bidWinner.address,
       paymentRecipient.address,
-      123000,
-      123456,
+      currentBlockTimestamp + ONE_DAY - ONE_HOUR,
+      currentBlockTimestamp + ONE_DAY + ONE_HOUR,
     )
 
     await dropStarERC1155.mint(
@@ -148,58 +165,54 @@ describe('PrimarySaleOrchestrator', function () {
   })
 
   it('TODO', async function () {
-    const allowanceResult = await dropStarERC1155
+    await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
-    console.log({ allowanceResult })
-
     const initialBalance = await provider.getBalance(paymentRecipient.address)
 
-    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+    const result = await primarySaleOrchestrator.connect(bidWinner).fulfillBid(
       cheque._tokenAddress,
       cheque._tokenId,
       cheque._holderAddress,
       cheque._price,
-      cheque._bidWinner,
+      cheque._bidWinnerAddress,
       cheque._paymentRecipientAddress,
-      cheque._startDateOld,
-      cheque._deadlineOld,
+      cheque._startDate,
+      cheque._deadline,
       cheque._signature.r,
       cheque._signature.s,
       cheque._signature.v,
 
       { value: cheque._price },
     )
-
-    await result
 
     const finalBalance = await provider.getBalance(paymentRecipient.address)
 
     expect(formatEther(finalBalance)).to.equal(
-      formatEther(initialBalance.add(_price)),
+      formatEther(initialBalance.add(cheque._price)),
     )
   })
 
   it('Should fail when using too late a cheque for finishing the sale', async function () {
-    const allowanceResult = await dropStarERC1155
+    await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
     const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      cheque._tokenAddress,
-      cheque._tokenId,
-      cheque._holderAddress,
-      cheque._price,
-      cheque._bidWinner,
-      cheque._paymentRecipientAddress,
-      cheque._startDateOld,
-      cheque._deadlineOld,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      chequeTooOld._tokenAddress,
+      chequeTooOld._tokenId,
+      chequeTooOld._holderAddress,
+      chequeTooOld._price,
+      chequeTooOld._bidWinnerAddress,
+      chequeTooOld._paymentRecipientAddress,
+      chequeTooOld._startDate,
+      chequeTooOld._deadline,
+      chequeTooOld._signature.r,
+      chequeTooOld._signature.s,
+      chequeTooOld._signature.v,
 
-      { value: cheque._price },
+      { value: chequeTooOld._price },
     )
 
     expect(result).revertedWith('ERRDATETOOOLD')
@@ -211,26 +224,26 @@ describe('PrimarySaleOrchestrator', function () {
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
     const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      cheque._tokenAddress,
-      cheque._tokenId,
-      cheque._holderAddress,
-      cheque._price,
-      cheque._bidWinner,
-      cheque._paymentRecipientAddress,
-      cheque._startDateAhead,
-      cheque._deadlineAhead,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      chequeTooYoung._tokenAddress,
+      chequeTooYoung._tokenId,
+      chequeTooYoung._holderAddress,
+      chequeTooYoung._price,
+      chequeTooYoung._bidWinnerAddress,
+      chequeTooYoung._paymentRecipientAddress,
+      chequeTooYoung._startDate,
+      chequeTooYoung._deadline,
+      chequeTooYoung._signature.r,
+      chequeTooYoung._signature.s,
+      chequeTooYoung._signature.v,
 
-      { value: cheque._price },
+      { value: chequeTooYoung._price },
     )
 
     expect(result).revertedWith('ERRDATETOOEARLY')
   })
 
   it('Should revert if the caller is not the bid winner', async function () {
-    const allowanceResult = await dropStarERC1155
+    await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
@@ -239,7 +252,7 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._tokenId,
       cheque._holderAddress,
       cheque._price,
-      cheque._bidWinner,
+      cheque._bidWinnerAddress,
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
@@ -254,7 +267,7 @@ describe('PrimarySaleOrchestrator', function () {
   })
 
   it('Should revert when there is not enough native token payed to the SC', async function () {
-    const allowanceResult = await dropStarERC1155
+    await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
@@ -263,7 +276,7 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._tokenId,
       cheque._holderAddress,
       cheque._price,
-      cheque._bidWinner,
+      cheque._bidWinnerAddress,
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
@@ -278,7 +291,7 @@ describe('PrimarySaleOrchestrator', function () {
   })
 
   it('Should revert when there is no native token payed to the SC', async function () {
-    const allowanceResult = await dropStarERC1155
+    await dropStarERC1155
       .connect(holder)
       .setApprovalForAll(primarySaleOrchestrator.address, true)
 
@@ -287,7 +300,7 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._tokenId,
       cheque._holderAddress,
       cheque._price,
-      cheque._bidWinner,
+      cheque._bidWinnerAddress,
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
@@ -305,7 +318,7 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._tokenId,
       cheque._holderAddress,
       cheque._price,
-      cheque._bidWinner,
+      cheque._bidWinnerAddress,
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
@@ -315,5 +328,27 @@ describe('PrimarySaleOrchestrator', function () {
     )
 
     expect(result).revertedWith('ERR1')
+  })
+
+  it('Should revert when receiving ether with data', async function () {
+    const tx = {
+      to: primarySaleOrchestrator.address,
+      value: parseEther('1'),
+      data: '0x01',
+    }
+
+    const sendTransaction = deployer.sendTransaction(tx)
+
+    expect(sendTransaction).revertedWith('ERR00')
+  })
+
+  it('Should revert when receiving ether with no data', async function () {
+    const tx = {
+      to: primarySaleOrchestrator.address,
+      value: parseEther('1'),
+    }
+    const sendTransaction = deployer.sendTransaction(tx)
+
+    expect(sendTransaction).revertedWith('ERR01')
   })
 })

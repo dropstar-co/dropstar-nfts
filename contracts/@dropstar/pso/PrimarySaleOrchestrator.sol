@@ -51,7 +51,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
 
         require(block.timestamp > _startDate, "ERRDATESOON");
 
-        require(_deadline < block.timestamp, "ERRDATELATE");
+        require(_deadline > block.timestamp, "ERRDATELATE");
 
         (bool sent, bytes memory data) = _paymentRecipient.call{
             value: msg.value
@@ -120,15 +120,11 @@ receive() exists?  fallback()
 
     // Function to receive Ether. msg.data must be empty
     receive() external payable {
-        revert("ERR0");
+        revert("ERR01");
     }
 
     // Fallback function is called when msg.data is not empty
     fallback() external payable {
-        revert("ERR0");
-    }
-
-    function getBalance() public view returns (uint256) {
-        return address(this).balance;
+        revert("ERR01");
     }
 }
