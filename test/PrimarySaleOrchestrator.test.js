@@ -89,6 +89,28 @@ describe('PrimarySaleOrchestrator', function () {
       currentBlockTimestamp + ONE_DAY + ONE_HOUR,
     )
 
+    await primarySaleOrchestrator.setSigners([deployer.address])
+
+    const hash = await primarySaleOrchestrator.doHash(
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinnerAddress,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+    )
+    const recoverExpected = deployer.address
+    const recoverReceived = await primarySaleOrchestrator.recover(
+      hash,
+      cheque._signature.v,
+      cheque._signature.r,
+      cheque._signature.s,
+    )
+
+    //console.log({ hash, recoverExpected, recoverReceived })
+
     await dropStarERC1155.mint(
       holder.address,
       0 /*tokenId*/,
@@ -108,15 +130,17 @@ describe('PrimarySaleOrchestrator', function () {
     _startDate,
     _deadline,
   ) {
-    let msgHash1 = await soliditySha3(
+    /*
+    let msgHash2 = await soliditySha3(
       {
         type: 'address',
         value: _tokenAddress,
       },
       { type: 'uint256', value: _tokenId },
     )
+    */
 
-    const msgHash2 = await primarySaleOrchestrator.doHash(
+    const msgHash1 = await primarySaleOrchestrator.doHash(
       _tokenAddress,
       _tokenId,
       _holderAddress,
@@ -126,6 +150,8 @@ describe('PrimarySaleOrchestrator', function () {
       _startDate,
       _deadline,
     )
+
+    //console.log({ msgHash1 })
 
     // Sign the binary data
     let signatureFull = await signer.signMessage(
@@ -171,6 +197,26 @@ describe('PrimarySaleOrchestrator', function () {
 
     const initialBalance = await provider.getBalance(paymentRecipient.address)
 
+    const hash = await primarySaleOrchestrator.doHash(
+      cheque._tokenAddress,
+      cheque._tokenId,
+      cheque._holderAddress,
+      cheque._price,
+      cheque._bidWinnerAddress,
+      cheque._paymentRecipientAddress,
+      cheque._startDate,
+      cheque._deadline,
+    )
+    const recoverExpected = deployer.address
+    const recoverReceived = await primarySaleOrchestrator.recover(
+      hash,
+      cheque._signature.v,
+      cheque._signature.r,
+      cheque._signature.s,
+    )
+
+    const recoverSigners = await primarySaleOrchestrator.signersAll()
+
     const result = await primarySaleOrchestrator.connect(bidWinner).fulfillBid(
       cheque._tokenAddress,
       cheque._tokenId,
@@ -180,10 +226,13 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
-
+      [
+        {
+          r: cheque._signature.r,
+          s: cheque._signature.s,
+          v: cheque._signature.v,
+        },
+      ],
       { value: cheque._price },
     )
 
@@ -192,6 +241,13 @@ describe('PrimarySaleOrchestrator', function () {
     expect(formatEther(finalBalance)).to.equal(
       formatEther(initialBalance.add(cheque._price)),
     )
+  })
+
+  it('Should fail when setSigners is called by other than owner', async function () {
+    const result = primarySaleOrchestrator
+      .connect(holder)
+      .setSigners([holder.address])
+    expect(result).revertedWith('Ownable: caller is not the owner')
   })
 
   it('Should fail when using too late a cheque for finishing the sale', async function () {
@@ -208,9 +264,13 @@ describe('PrimarySaleOrchestrator', function () {
       chequeTooOld._paymentRecipientAddress,
       chequeTooOld._startDate,
       chequeTooOld._deadline,
-      chequeTooOld._signature.r,
-      chequeTooOld._signature.s,
-      chequeTooOld._signature.v,
+      [
+        {
+          r: chequeTooOld._signature.r,
+          s: chequeTooOld._signature.s,
+          v: chequeTooOld._signature.v,
+        },
+      ],
 
       { value: chequeTooOld._price },
     )
@@ -232,9 +292,13 @@ describe('PrimarySaleOrchestrator', function () {
       chequeTooYoung._paymentRecipientAddress,
       chequeTooYoung._startDate,
       chequeTooYoung._deadline,
-      chequeTooYoung._signature.r,
-      chequeTooYoung._signature.s,
-      chequeTooYoung._signature.v,
+      [
+        {
+          r: chequeTooYoung._signature.r,
+          s: chequeTooYoung._signature.s,
+          v: chequeTooYoung._signature.v,
+        },
+      ],
 
       { value: chequeTooYoung._price },
     )
@@ -256,9 +320,13 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      [
+        {
+          r: cheque._signature.r,
+          s: cheque._signature.s,
+          v: cheque._signature.v,
+        },
+      ],
 
       { value: cheque._price },
     )
@@ -280,9 +348,13 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      [
+        {
+          r: cheque._signature.r,
+          s: cheque._signature.s,
+          v: cheque._signature.v,
+        },
+      ],
 
       { value: _priceNotEnough },
     )
@@ -304,9 +376,13 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      [
+        {
+          r: cheque._signature.r,
+          s: cheque._signature.s,
+          v: cheque._signature.v,
+        },
+      ],
     )
 
     expect(result).revertedWith('ERR2')
@@ -322,9 +398,13 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._paymentRecipientAddress,
       cheque._startDate,
       cheque._deadline,
-      cheque._signature.r,
-      cheque._signature.s,
-      cheque._signature.v,
+      [
+        {
+          r: cheque._signature.r,
+          s: cheque._signature.s,
+          v: cheque._signature.v,
+        },
+      ],
     )
 
     expect(result).revertedWith('ERR1')

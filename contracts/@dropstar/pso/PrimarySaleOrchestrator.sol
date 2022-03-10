@@ -18,7 +18,19 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
 
     mapping(bytes32 => bool) public hashUsed;
 
-    constructor() EIP712("DropStar", "1.0.0") {}
+    address[] public signers;
+
+    constructor() EIP712("PrimarySaleOrchestrator", "1.0.0") {}
+
+    struct Signature {
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
+    function signersAll() external view returns (address[] memory) {
+        return signers;
+    }
 
     function fulfillBid(
         address _tokenAddress,
@@ -29,13 +41,15 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         address payable _paymentRecipient,
         uint256 _startDate,
         uint256 _deadline,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
+        Signature[] calldata _signatures
     ) public payable {
-        DropStarERC1155 nft = DropStarERC1155(_tokenAddress);
-
-        require(nft.isApprovedForAll(_holder, address(this)), "ERR1");
+        require(
+            DropStarERC1155(_tokenAddress).isApprovedForAll(
+                _holder,
+                address(this)
+            ),
+            "ERR1"
+        );
 
         require(msg.value >= _price, "ERR2");
 
@@ -58,13 +72,34 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         }("");
         require(sent, "ERR4");
 
-        nft.safeBatchTransferFrom(
+        require(
+            recoverAll(
+                doHash(
+                    _tokenAddress,
+                    _tokenId,
+                    _holder,
+                    _price,
+                    _bidWinner,
+                    _paymentRecipient,
+                    _startDate,
+                    _deadline
+                ),
+                _signatures
+            ),
+            "ERR05"
+        );
+
+        DropStarERC1155(_tokenAddress).safeBatchTransferFrom(
             _holder,
             _bidWinner,
             tokenIds,
             amounts,
             "0x00"
         );
+    }
+
+    function setSigners(address[] calldata _signers) public onlyOwner {
+        signers = _signers;
     }
 
     function doHash(
@@ -76,7 +111,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         address _paymentRecipient,
         uint256 _startDate,
         uint256 _deadline
-    ) external pure returns (bytes32) {
+    ) public pure returns (bytes32) {
         return
             keccak256(
                 abi.encodePacked(
@@ -100,6 +135,26 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
     ) public pure returns (address) {
         bytes32 ethHash = _message.toEthSignedMessageHash();
         return ethHash.recover(v, r, s);
+    }
+
+    function recoverAll(bytes32 _message, Signature[] calldata _signatures)
+        public
+        view
+        returns (bool)
+    {
+        bytes32 ethHash = _message.toEthSignedMessageHash();
+
+        bool isValid = true;
+        for (uint256 i = 0; i < _signatures.length; i++) {
+            if (
+                ethHash.recover(
+                    _signatures[i].v,
+                    _signatures[i].r,
+                    _signatures[i].s
+                ) != signers[i]
+            ) isValid = false;
+        }
+        return isValid;
     }
 
     /*
