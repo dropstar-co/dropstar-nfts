@@ -19,7 +19,7 @@ describe('PrimarySaleOrchestrator', function () {
   const ONE_DAY = 60 * 60 * 24
   const ONE_HOUR = 60 * 60
 
-  let cheque, chequeTooOld, chequeTooYoung
+  let cheque, chequeTooOld, chequeTooYoung, chequeHolder
   let _priceNotEnough
 
   let currentBlockTimestamp
@@ -87,6 +87,18 @@ describe('PrimarySaleOrchestrator', function () {
       paymentRecipient.address,
       currentBlockTimestamp + ONE_DAY - ONE_HOUR,
       currentBlockTimestamp + ONE_DAY + ONE_HOUR,
+    )
+
+    chequeHolder = await sign(
+      holder,
+      dropStarERC1155.address,
+      0,
+      holder.address,
+      parseUnits('60', 'ether'),
+      bidWinner.address,
+      paymentRecipient.address,
+      currentBlockTimestamp - ONE_HOUR,
+      currentBlockTimestamp + ONE_HOUR,
     )
 
     await primarySaleOrchestrator.setSigners([deployer.address])
@@ -241,6 +253,33 @@ describe('PrimarySaleOrchestrator', function () {
     expect(formatEther(finalBalance)).to.equal(
       formatEther(initialBalance.add(cheque._price)),
     )
+  })
+
+  it('Should revert when signer is not a valid one', async function () {
+    await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+      chequeHolder._tokenAddress,
+      chequeHolder._tokenId,
+      chequeHolder._holderAddress,
+      chequeHolder._price,
+      chequeHolder._bidWinnerAddress,
+      chequeHolder._paymentRecipientAddress,
+      chequeHolder._startDate,
+      chequeHolder._deadline,
+      [
+        {
+          r: chequeHolder._signature.r,
+          s: chequeHolder._signature.s,
+          v: chequeHolder._signature.v,
+        },
+      ],
+      { value: chequeHolder._price },
+    )
+
+    expect(result).revertedWith('ERR05')
   })
 
   it('Should fail when setSigners is called by other than owner', async function () {
