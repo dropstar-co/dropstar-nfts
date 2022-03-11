@@ -19,7 +19,7 @@ describe('PrimarySaleOrchestrator', function () {
   const ONE_DAY = 60 * 60 * 24
   const ONE_HOUR = 60 * 60
 
-  let cheque, chequeTooOld, chequeTooYoung, chequeHolder
+  let cheque, chequeTooOld, chequeTooYoung, chequeHolder, chequeInvalidDates
   let _priceNotEnough
 
   let currentBlockTimestamp
@@ -99,6 +99,19 @@ describe('PrimarySaleOrchestrator', function () {
       paymentRecipient.address,
       currentBlockTimestamp - ONE_HOUR,
       currentBlockTimestamp + ONE_HOUR,
+    )
+
+    chequeInvalidDates = await sign(
+      deployer,
+      dropStarERC1155.address,
+      0,
+      holder.address,
+      parseUnits('60', 'ether'),
+      bidWinner.address,
+      paymentRecipient.address,
+      //These are backwar
+      currentBlockTimestamp + ONE_HOUR,
+      currentBlockTimestamp - ONE_HOUR,
     )
 
     await primarySaleOrchestrator.setSigners([deployer.address])
@@ -253,6 +266,33 @@ describe('PrimarySaleOrchestrator', function () {
     expect(formatEther(finalBalance)).to.equal(
       formatEther(initialBalance.add(cheque._price)),
     )
+  })
+
+  it('Should revert when dates are backwards', async function () {
+    await dropStarERC1155
+      .connect(holder)
+      .setApprovalForAll(primarySaleOrchestrator.address, true)
+
+    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
+      chequeInvalidDates._tokenAddress,
+      chequeInvalidDates._tokenId,
+      chequeInvalidDates._holderAddress,
+      chequeInvalidDates._price,
+      chequeInvalidDates._bidWinnerAddress,
+      chequeInvalidDates._paymentRecipientAddress,
+      chequeInvalidDates._startDate,
+      chequeInvalidDates._deadline,
+      [
+        {
+          r: chequeInvalidDates._signature.r,
+          s: chequeInvalidDates._signature.s,
+          v: chequeInvalidDates._signature.v,
+        },
+      ],
+      { value: chequeInvalidDates._price },
+    )
+
+    expect(result).revertedWith('ERRDATEINVALID')
   })
 
   it('Should revert when signer is not a valid one', async function () {
