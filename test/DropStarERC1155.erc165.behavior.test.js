@@ -22,7 +22,5 @@ contract('DropStarERC1155', function (accounts) {
     'AccessControlEnumerable',
     'IERC2981',
     'ERC1155',
-    'DropStarERC1155withGatedContent',
-    'DropStarERC1155withRoyalty',
   ])
 })

@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "../../@rarible/royalties/LibPart.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
-interface DropStarERC1155withRoyalty is IERC1155 {
+interface DropStarERC1155withRoyalty {
     /// ERC165 bytes to add to interface array - set in parent contract
     /// implementing this standard
     ///

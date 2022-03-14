@@ -1,6 +1,9 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 
+const DATA = '0x00'
+const MOCK_URI = 'mockURI'
+
 describe('DropStarERC1155 gated content capabilities', function () {
   let DropStarERC1155, dropStarERC1155
   let deployer, admin, uriSetter, other
@@ -11,7 +14,7 @@ describe('DropStarERC1155 gated content capabilities', function () {
 
   beforeEach(async function () {
     DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    dropStarERC1155 = await DropStarERC1155.deploy()
+    dropStarERC1155 = await DropStarERC1155.deploy(MOCK_URI)
 
     this.mock = dropStarERC1155
     ;[deployer, admin, uriSetter, other] = await ethers.getSigners()

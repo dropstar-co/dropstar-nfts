@@ -1,6 +1,7 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const DATA = '0x00'
+const MOCK_URI = 'mockURI'
 
 describe('DropStarERC1155 general capabilities', function () {
   let DropStarERC1155, dropStarERC1155
@@ -14,7 +15,7 @@ describe('DropStarERC1155 general capabilities', function () {
 
   beforeEach(async function () {
     DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    dropStarERC1155 = await DropStarERC1155.deploy()
+    dropStarERC1155 = await DropStarERC1155.deploy(MOCK_URI)
 
     this.mock = dropStarERC1155
     ;[deployer, admin, minter, other] = await ethers.getSigners()
@@ -98,5 +99,89 @@ describe('DropStarERC1155 general capabilities', function () {
 
     //Validation
     await expect(mintTx).revertedWith(otherMissingURISetterRoleRevert)
+  })
+
+  it('Should revert mint operation when contract is paused', async function () {
+    // Execution
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+
+    //Validation
+    await expect(grantRole)
+      .to.emit(dropStarERC1155, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
+
+    await dropStarERC1155.pause()
+
+    const mintTx = dropStarERC1155
+      .connect(minter)
+      .mint(minter.address, tokenID, tokenAmount, DATA)
+
+    await expect(mintTx).to.be.revertedWith('Pausable: paused')
+  })
+
+  it('Should revert mintBatch operation when contract is paused', async function () {
+    // Execution
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+
+    //Validation
+    await expect(grantRole)
+      .to.emit(dropStarERC1155, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
+
+    await dropStarERC1155.pause()
+
+    const mintTx = dropStarERC1155
+      .connect(minter)
+      .mintBatch(minter.address, [tokenID], [tokenAmount], DATA)
+
+    await expect(mintTx).to.be.revertedWith('Pausable: paused')
+  })
+
+  it('Should revert mint operation when contract is paused and work again when unpaused', async function () {
+    // Execution
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+
+    //Validation
+    await expect(grantRole)
+      .to.emit(dropStarERC1155, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
+
+    await dropStarERC1155.pause()
+
+    const mintTx = dropStarERC1155
+      .connect(minter)
+      .mint(minter.address, tokenID, tokenAmount, DATA)
+
+    await expect(mintTx).to.be.revertedWith('Pausable: paused')
+
+    await dropStarERC1155.unpause()
+
+    await dropStarERC1155
+      .connect(minter)
+      .mint(minter.address, tokenID, tokenAmount, DATA)
+  })
+
+  it('Should revert mintBatch operation when contract is paused', async function () {
+    // Execution
+    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+
+    //Validation
+    await expect(grantRole)
+      .to.emit(dropStarERC1155, 'RoleGranted')
+      .withArgs(MINTER_ROLE, minter.address, deployer.address)
+
+    await dropStarERC1155.pause()
+
+    const mintTx = dropStarERC1155
+      .connect(minter)
+      .mintBatch(minter.address, [tokenID], [tokenAmount], DATA)
+
+    await expect(mintTx).to.be.revertedWith('Pausable: paused')
+
+    await dropStarERC1155.unpause()
+
+    await dropStarERC1155
+      .connect(minter)
+      .mintBatch(minter.address, [tokenID], [tokenAmount], DATA)
   })
 })

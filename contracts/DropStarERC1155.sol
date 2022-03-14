@@ -2,37 +2,44 @@
 
 pragma solidity ^0.8.0;
 
+import "./@rarible/royalties/LibPart.sol";
+import "./@rarible/royalties/LibRoyaltiesV2.sol";
+import "./@rarible/royalties/impl/RoyaltiesV2Impl.sol";
+
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import "./@dropstar/royalties/DropStarERC1155withRoyalty.sol";
 import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
-
-import "./@dropstar/content/DropStarERC1155withGatedContent.sol";
 import "./@dropstar/content/impl/DropStarERC1155withGatedContentImpl.sol";
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
 
 contract DropStarERC1155 is
+    ERC1155Pausable,
     ERC1155Supply,
+    AccessControlEnumerable,
     DropStarERC1155withRoyaltyImpl,
-    DropStarERC1155withGatedContentImpl,
-    AccessControlEnumerable
+    DropStarERC1155withGatedContentImpl
 {
     using SafeMath for uint256;
 
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor() ERC1155("") {
+    constructor(string memory _uri) ERC1155(_uri) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(URI_SETTER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
     }
 
-    function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
+    function setURI(string memory newuri)
+        external
+        onlyRole(URI_SETTER_ROLE)
+        whenNotPaused
+    {
         _setURI(newuri);
     }
 
@@ -41,7 +48,7 @@ contract DropStarERC1155 is
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) public onlyRole(MINTER_ROLE) {
+    ) external onlyRole(MINTER_ROLE) whenNotPaused {
         _mint(account, id, amount, data);
     }
 
@@ -50,28 +57,52 @@ contract DropStarERC1155 is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) public onlyRole(MINTER_ROLE) {
+    ) external onlyRole(MINTER_ROLE) whenNotPaused {
         _mintBatch(to, ids, amounts, data);
     }
 
-    // The following functions are overrides required by Solidity.
+    function setURIGatedContent(
+        uint256 _tokenId,
+        string[] memory _uriGatedContent
+    )
+        external
+        override(DropStarERC1155withGatedContent)
+        onlyRole(URI_SETTER_ROLE)
+        whenNotPaused
+    {
+        _setURIGatedContent(_tokenId, _uriGatedContent);
+    }
+
+    function setRoyalties(
+        uint256 _tokenId,
+        address payable _royaltiesRecipientAddress,
+        uint96 _percentageBasisPoints
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        _setRoyalties(
+            _tokenId,
+            _royaltiesRecipientAddress,
+            _percentageBasisPoints
+        );
+    }
+
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        _pause();
+    }
+
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused {
+        _unpause();
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(
-            DropStarERC1155withRoyaltyImpl,
-            DropStarERC1155withGatedContentImpl,
-            ERC1155,
-            AccessControlEnumerable
-        )
+        override(ERC1155, AccessControlEnumerable, IERC165)
         returns (bool)
     {
         return
             interfaceId == type(IERC1155).interfaceId ||
             interfaceId == type(ERC1155Supply).interfaceId ||
             interfaceId == type(AccessControl).interfaceId ||
-            interfaceId == type(DropStarERC1155withGatedContent).interfaceId ||
-            interfaceId == type(DropStarERC1155withRoyalty).interfaceId ||
             interfaceId == type(IERC2981).interfaceId ||
             interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ||
             super.supportsInterface(interfaceId);
@@ -84,7 +115,7 @@ contract DropStarERC1155 is
         uint256[] memory ids,
         uint256[] memory amounts,
         bytes memory data
-    ) internal override(ERC1155, ERC1155Supply) {
+    ) internal override(ERC1155Supply, ERC1155Pausable) whenNotPaused {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 }

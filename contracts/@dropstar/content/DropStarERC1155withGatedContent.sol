@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface DropStarERC1155withGatedContent is IERC1155 {
+interface DropStarERC1155withGatedContent {
     /**
      * Retrieves the list of gatd content uris for each token.
      */

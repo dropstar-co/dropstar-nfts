@@ -2,28 +2,47 @@ const { expect } = require('chai')
 const { ethers } = require('hardhat')
 const { parseUnits } = ethers.utils
 
+const DATA = '0x00'
+const MOCK_URI = 'mockURI'
+
 describe('DropStarERC1155', function () {
-  it('Should exist when deployed', async function () {
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
+  let DropStarERC1155, dropStarERC1155
+  let deployer, admin, minter, other
+  let MINTER_ROLE
+  let tokenID, tokenAmount
+  let tokenIDs, tokenAmounts
+
+  const otherMissingURISetterRoleRevert =
+    'AccessControl: account 0x90f79bf6eb2c4f870365e785982e1f101e93b906 is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6'
+
+  beforeEach(async function () {
+    DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
+    dropStarERC1155 = await DropStarERC1155.deploy(MOCK_URI)
     await dropStarERC1155.deployed()
 
+    this.mock = dropStarERC1155
+    ;[deployer, admin, minter, other] = await ethers.getSigners()
+
+    MINTER_ROLE = await dropStarERC1155.MINTER_ROLE()
+
+    tokenIDs = [0, 1, 2]
+    tokenAmounts = [1, 10, 20]
+
+    tokenID = 0
+    tokenAmount = 1
+  })
+
+  it('Should exist when deployed', async function () {
     await dropStarERC1155.uri(0)
   })
 
   it('Should return a 10% royalty with royaltyInfo', async function () {
-    const [deployer] = await ethers.getSigners()
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-    await dropStarERC1155.deployed()
     const tokenID = 0
     const amount = 1
-    const calldata = '0x00'
     const salePrice = 100
     const royaltyAmountExpected = '10'
     const royaltyPercentPoints = 10 * 100
-    await dropStarERC1155.mint(deployer.address, tokenID, amount, calldata)
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
     await dropStarERC1155.setRoyalties(
       tokenID,
       deployer.address,
@@ -35,18 +54,12 @@ describe('DropStarERC1155', function () {
   })
 
   it('Should return a 33% royalty with getRaribleV2Royalties', async function () {
-    const [deployer] = await ethers.getSigners()
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-    await dropStarERC1155.deployed()
     const tokenID = 0
     const amount = 1
-    const calldata = '0x00'
 
     const expectedRoyaltyPercentPoints = (33 * 100).toString()
     const royaltyPercentPoints = 33 * 100
-    await dropStarERC1155.mint(deployer.address, tokenID, amount, calldata)
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
     await dropStarERC1155.setRoyalties(
       tokenID,
       deployer.address,
@@ -63,16 +76,10 @@ describe('DropStarERC1155', function () {
   })
 
   it('Should not fail calling getRaribleV2Royalties when royalties are empty', async function () {
-    const [deployer] = await ethers.getSigners()
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-    await dropStarERC1155.deployed()
     const tokenID = 0
     const amount = 1
-    const calldata = '0x00'
 
-    await dropStarERC1155.mint(deployer.address, tokenID, amount, calldata)
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
 
     const raribleV2Royalties = await dropStarERC1155.getRaribleV2Royalties(
       tokenID,
@@ -82,16 +89,10 @@ describe('DropStarERC1155', function () {
   })
 
   it('Should not fail calling royaltyInfo when royalties are empty', async function () {
-    const [deployer] = await ethers.getSigners()
-
-    const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    const dropStarERC1155 = await DropStarERC1155.deploy()
-    await dropStarERC1155.deployed()
     const tokenID = 0
     const amount = 1
-    const calldata = '0x00'
 
-    await dropStarERC1155.mint(deployer.address, tokenID, amount, calldata)
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
 
     const royaltyInfo = await dropStarERC1155.royaltyInfo(
       tokenID,

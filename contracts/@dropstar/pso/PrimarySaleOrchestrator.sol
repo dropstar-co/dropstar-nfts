@@ -42,7 +42,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         uint256 _startDate,
         uint256 _deadline,
         Signature[] calldata _signatures
-    ) public payable {
+    ) external payable {
         require(
             DropStarERC1155(_tokenAddress).isApprovedForAll(
                 _holder,
@@ -63,9 +63,12 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
 
         require(_startDate < _deadline, "ERRDATEINVALID");
 
-        require(block.timestamp > _startDate, "ERRDATESOON");
+        require(_startDate < block.timestamp, "ERRDATESOON");
 
         require(_deadline > block.timestamp, "ERRDATELATE");
+
+        require(_paymentRecipient != address(0));
+        require(_bidWinner != address(0));
 
         (bool sent, bytes memory data) = _paymentRecipient.call{
             value: msg.value
@@ -98,7 +101,7 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         );
     }
 
-    function setSigners(address[] calldata _signers) public onlyOwner {
+    function setSigners(address[] calldata _signers) external onlyOwner {
         signers = _signers;
     }
 
@@ -132,19 +135,22 @@ contract PrimarySaleOrchestrator is Ownable, EIP712 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public pure returns (address) {
+    ) external pure returns (address) {
         bytes32 ethHash = _message.toEthSignedMessageHash();
         return ethHash.recover(v, r, s);
     }
 
     function recoverAll(bytes32 _message, Signature[] calldata _signatures)
-        public
+        internal
         view
         returns (bool)
     {
         bytes32 ethHash = _message.toEthSignedMessageHash();
 
         bool isValid = true;
+
+        require(_signatures.length == signers.length, "ERRSIGNERS");
+
         for (uint256 i = 0; i < _signatures.length; i++) {
             if (
                 ethHash.recover(
