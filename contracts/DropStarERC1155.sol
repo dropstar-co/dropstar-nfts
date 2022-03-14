@@ -2,9 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./@rarible/royalties/LibPart.sol";
 import "./@rarible/royalties/LibRoyaltiesV2.sol";
-import "./@rarible/royalties/impl/RoyaltiesV2Impl.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";

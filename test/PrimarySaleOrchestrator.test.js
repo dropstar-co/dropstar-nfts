@@ -8,8 +8,10 @@ const { formatEther } = ethers.utils
 
 const { BN, soliditySha3 } = require('web3-utils')
 
+const MOCK_URI = 'mockURI'
+
 describe('PrimarySaleOrchestrator', function () {
-  let primarySaleOrchestrator
+  let pso
   let dropStarERC1155
   let deployer, holder, bidWinner
 
@@ -38,17 +40,17 @@ describe('PrimarySaleOrchestrator', function () {
     )
 
     const DropStarERC1155 = await ethers.getContractFactory('DropStarERC1155')
-    dropStarERC1155 = await DropStarERC1155.deploy()
+    dropStarERC1155 = await DropStarERC1155.deploy(MOCK_URI)
 
     const PrimarySaleOrchestrator = await ethers.getContractFactory(
       'PrimarySaleOrchestrator',
     )
-    primarySaleOrchestrator = await PrimarySaleOrchestrator.deploy()
+    pso = await PrimarySaleOrchestrator.deploy()
 
     await dropStarERC1155.deployed()
-    await primarySaleOrchestrator.deployed()
+    await pso.deployed()
 
-    this.mock = primarySaleOrchestrator
+    this.mock = pso
     ;[deployer, holder, bidWinner, paymentRecipient] = await ethers.getSigners()
 
     _priceNotEnough = parseUnits('59', 'ether')
@@ -114,9 +116,9 @@ describe('PrimarySaleOrchestrator', function () {
       currentBlockTimestamp - ONE_HOUR,
     )
 
-    await primarySaleOrchestrator.setSigners([deployer.address])
+    await pso.setSigners([deployer.address])
 
-    const hash = await primarySaleOrchestrator.doHash(
+    const hash = await pso.doHash(
       cheque._tokenAddress,
       cheque._tokenId,
       cheque._holderAddress,
@@ -127,7 +129,7 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._deadline,
     )
     const recoverExpected = deployer.address
-    const recoverReceived = await primarySaleOrchestrator.recover(
+    const recoverReceived = await pso.recover(
       hash,
       cheque._signature.v,
       cheque._signature.r,
@@ -165,7 +167,7 @@ describe('PrimarySaleOrchestrator', function () {
     )
     */
 
-    const msgHash1 = await primarySaleOrchestrator.doHash(
+    const msgHash1 = await pso.doHash(
       _tokenAddress,
       _tokenId,
       _holderAddress,
@@ -190,13 +192,12 @@ describe('PrimarySaleOrchestrator', function () {
 
     // For Solidity, we need the expanded-format of a signature
     let signature = ethers.utils.splitSignature(signatureFull)
-    const primarySaleOrchestratorrecover =
-      await primarySaleOrchestrator.recover(
-        msgHash1,
-        signature.v,
-        signature.r,
-        signature.s,
-      )
+    const primarySaleOrchestratorrecover = await pso.recover(
+      msgHash1,
+      signature.v,
+      signature.r,
+      signature.s,
+    )
 
     return {
       _tokenAddress,
@@ -212,17 +213,15 @@ describe('PrimarySaleOrchestrator', function () {
   }
 
   it('Should exist when deployed', async function () {
-    await primarySaleOrchestrator.deployed()
+    await pso.deployed()
   })
 
   it('TODO', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
     const initialBalance = await provider.getBalance(paymentRecipient.address)
 
-    const hash = await primarySaleOrchestrator.doHash(
+    const hash = await pso.doHash(
       cheque._tokenAddress,
       cheque._tokenId,
       cheque._holderAddress,
@@ -233,33 +232,16 @@ describe('PrimarySaleOrchestrator', function () {
       cheque._deadline,
     )
     const recoverExpected = deployer.address
-    const recoverReceived = await primarySaleOrchestrator.recover(
+    const recoverReceived = await pso.recover(
       hash,
       cheque._signature.v,
       cheque._signature.r,
       cheque._signature.s,
     )
 
-    const recoverSigners = await primarySaleOrchestrator.signersAll()
+    const recoverSigners = await pso.signersAll()
 
-    const result = await primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      cheque._tokenAddress,
-      cheque._tokenId,
-      cheque._holderAddress,
-      cheque._price,
-      cheque._bidWinnerAddress,
-      cheque._paymentRecipientAddress,
-      cheque._startDate,
-      cheque._deadline,
-      [
-        {
-          r: cheque._signature.r,
-          s: cheque._signature.s,
-          v: cheque._signature.v,
-        },
-      ],
-      { value: cheque._price },
-    )
+    const result = await call_PSO_fulfillBid(pso, bidWinner, cheque)
 
     const finalBalance = await provider.getBalance(paymentRecipient.address)
 
@@ -269,184 +251,66 @@ describe('PrimarySaleOrchestrator', function () {
   })
 
   it('Should revert when dates are backwards', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      chequeInvalidDates._tokenAddress,
-      chequeInvalidDates._tokenId,
-      chequeInvalidDates._holderAddress,
-      chequeInvalidDates._price,
-      chequeInvalidDates._bidWinnerAddress,
-      chequeInvalidDates._paymentRecipientAddress,
-      chequeInvalidDates._startDate,
-      chequeInvalidDates._deadline,
-      [
-        {
-          r: chequeInvalidDates._signature.r,
-          s: chequeInvalidDates._signature.s,
-          v: chequeInvalidDates._signature.v,
-        },
-      ],
-      { value: chequeInvalidDates._price },
-    )
+    const result = call_PSO_fulfillBid(pso, bidWinner, chequeInvalidDates)
 
-    expect(result).revertedWith('ERRDATEINVALID')
+    await expect(result).to.be.revertedWith('ERRDATEINVALID')
   })
 
   it('Should revert when signer is not a valid one', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      chequeHolder._tokenAddress,
-      chequeHolder._tokenId,
-      chequeHolder._holderAddress,
-      chequeHolder._price,
-      chequeHolder._bidWinnerAddress,
-      chequeHolder._paymentRecipientAddress,
-      chequeHolder._startDate,
-      chequeHolder._deadline,
-      [
-        {
-          r: chequeHolder._signature.r,
-          s: chequeHolder._signature.s,
-          v: chequeHolder._signature.v,
-        },
-      ],
-      { value: chequeHolder._price },
-    )
+    const result = call_PSO_fulfillBid(pso, bidWinner, chequeHolder)
 
-    expect(result).revertedWith('ERR05')
+    await expect(result).to.be.revertedWith('ERR05')
   })
 
   it('Should fail when setSigners is called by other than owner', async function () {
-    const result = primarySaleOrchestrator
-      .connect(holder)
-      .setSigners([holder.address])
-    expect(result).revertedWith('Ownable: caller is not the owner')
+    const result = pso.connect(holder).setSigners([holder.address])
+    await expect(result).to.be.revertedWith('Ownable: caller is not the owner')
   })
 
   it('Should fail when using too late a cheque for finishing the sale', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      chequeTooOld._tokenAddress,
-      chequeTooOld._tokenId,
-      chequeTooOld._holderAddress,
-      chequeTooOld._price,
-      chequeTooOld._bidWinnerAddress,
-      chequeTooOld._paymentRecipientAddress,
-      chequeTooOld._startDate,
-      chequeTooOld._deadline,
-      [
-        {
-          r: chequeTooOld._signature.r,
-          s: chequeTooOld._signature.s,
-          v: chequeTooOld._signature.v,
-        },
-      ],
+    const result = call_PSO_fulfillBid(pso, bidWinner, chequeTooOld)
 
-      { value: chequeTooOld._price },
-    )
-
-    expect(result).revertedWith('ERRDATETOOOLD')
+    await expect(result).to.be.revertedWith('ERRDATELATE')
   })
 
   it('Should fail when using too early a cheque for finishing the sale', async function () {
     const allowanceResult = await dropStarERC1155
       .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+      .setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.connect(bidWinner).fulfillBid(
-      chequeTooYoung._tokenAddress,
-      chequeTooYoung._tokenId,
-      chequeTooYoung._holderAddress,
-      chequeTooYoung._price,
-      chequeTooYoung._bidWinnerAddress,
-      chequeTooYoung._paymentRecipientAddress,
-      chequeTooYoung._startDate,
-      chequeTooYoung._deadline,
-      [
-        {
-          r: chequeTooYoung._signature.r,
-          s: chequeTooYoung._signature.s,
-          v: chequeTooYoung._signature.v,
-        },
-      ],
+    const result = call_PSO_fulfillBid(pso, bidWinner, chequeTooYoung)
 
-      { value: chequeTooYoung._price },
-    )
-
-    expect(result).revertedWith('ERRDATETOOEARLY')
+    await expect(result).to.be.revertedWith('ERRDATESOON')
   })
 
   it('Should revert if the caller is not the bid winner', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.fulfillBid(
-      cheque._tokenAddress,
-      cheque._tokenId,
-      cheque._holderAddress,
-      cheque._price,
-      cheque._bidWinnerAddress,
-      cheque._paymentRecipientAddress,
-      cheque._startDate,
-      cheque._deadline,
-      [
-        {
-          r: cheque._signature.r,
-          s: cheque._signature.s,
-          v: cheque._signature.v,
-        },
-      ],
+    const result = call_PSO_fulfillBid(pso, deployer, cheque)
 
-      { value: cheque._price },
-    )
-
-    expect(result).revertedWith('ERR3')
+    await expect(result).to.be.revertedWith('ERR3')
   })
 
   it('Should revert when there is not enough native token payed to the SC', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    const result = primarySaleOrchestrator.fulfillBid(
-      cheque._tokenAddress,
-      cheque._tokenId,
-      cheque._holderAddress,
-      cheque._price,
-      cheque._bidWinnerAddress,
-      cheque._paymentRecipientAddress,
-      cheque._startDate,
-      cheque._deadline,
-      [
-        {
-          r: cheque._signature.r,
-          s: cheque._signature.s,
-          v: cheque._signature.v,
-        },
-      ],
+    const result = call_PSO_fulfillBid(pso, deployer, cheque, {
+      value: _priceNotEnough,
+    })
 
-      { value: _priceNotEnough },
-    )
-
-    expect(result).revertedWith('ERR2')
+    await expect(result).to.be.revertedWith('ERR2')
   })
 
   it('Should revert when there is no native token payed to the SC', async function () {
-    await dropStarERC1155
-      .connect(holder)
-      .setApprovalForAll(primarySaleOrchestrator.address, true)
+    await dropStarERC1155.connect(holder).setApprovalForAll(pso.address, true)
 
-    result = primarySaleOrchestrator.fulfillBid(
+    result = pso.fulfillBid(
       cheque._tokenAddress,
       cheque._tokenId,
       cheque._holderAddress,
@@ -464,11 +328,11 @@ describe('PrimarySaleOrchestrator', function () {
       ],
     )
 
-    expect(result).revertedWith('ERR2')
+    await expect(result).to.be.revertedWith('ERR2')
   })
 
   it('Should revert when the contract has no allowance for moving the NFT from the holder', async function () {
-    const result = primarySaleOrchestrator.fulfillBid(
+    const result = pso.fulfillBid(
       cheque._tokenAddress,
       cheque._tokenId,
       cheque._holderAddress,
@@ -486,28 +350,57 @@ describe('PrimarySaleOrchestrator', function () {
       ],
     )
 
-    expect(result).revertedWith('ERR1')
+    await expect(result).to.be.revertedWith('ERR1')
   })
 
   it('Should revert when receiving ether with data', async function () {
     const tx = {
-      to: primarySaleOrchestrator.address,
+      to: pso.address,
       value: parseEther('1'),
       data: '0x01',
     }
 
     const sendTransaction = deployer.sendTransaction(tx)
 
-    expect(sendTransaction).revertedWith('ERR00')
+    await expect(sendTransaction).revertedWith('ERR01')
   })
 
   it('Should revert when receiving ether with no data', async function () {
     const tx = {
-      to: primarySaleOrchestrator.address,
+      to: pso.address,
       value: parseEther('1'),
     }
     const sendTransaction = deployer.sendTransaction(tx)
 
-    expect(sendTransaction).revertedWith('ERR01')
+    await expect(sendTransaction).revertedWith('ERR01')
   })
 })
+async function call_PSO_fulfillBid(
+  primarySaleOrchestrator,
+  caller,
+  cheque,
+  overrides,
+) {
+  return primarySaleOrchestrator.connect(caller).fulfillBid(
+    cheque._tokenAddress,
+    cheque._tokenId,
+    cheque._holderAddress,
+    cheque._price,
+    cheque._bidWinnerAddress,
+    cheque._paymentRecipientAddress,
+    cheque._startDate,
+    cheque._deadline,
+    [
+      {
+        r: cheque._signature.r,
+        s: cheque._signature.s,
+        v: cheque._signature.v,
+      },
+    ],
+    overrides
+      ? overrides
+      : {
+          value: cheque._price,
+        },
+  )
+}
