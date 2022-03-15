@@ -36,7 +36,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should allow the artist to mint nfts', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
 
     //Validation
     await expect(grantRole)
@@ -54,7 +57,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should allow the artist to mintBatch the nfts', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
     await dropStarERC1155
       .connect(minter)
       .mintBatch(minter.address, tokenIDs, tokenAmounts, DATA)
@@ -103,7 +109,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should revert mint operation when contract is paused', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
 
     //Validation
     await expect(grantRole)
@@ -121,7 +130,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should revert mintBatch operation when contract is paused', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
 
     //Validation
     await expect(grantRole)
@@ -139,7 +151,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should revert mint operation when contract is paused and work again when unpaused', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
 
     //Validation
     await expect(grantRole)
@@ -163,7 +178,10 @@ describe('DropStarERC1155 general capabilities', function () {
 
   it('Should revert mintBatch operation when contract is paused', async function () {
     // Execution
-    const grantRole = dropStarERC1155.grantRole(MINTER_ROLE, minter.address)
+    const grantRole = await dropStarERC1155.grantRole(
+      MINTER_ROLE,
+      minter.address,
+    )
 
     //Validation
     await expect(grantRole)

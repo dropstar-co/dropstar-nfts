@@ -53,6 +53,38 @@ describe('DropStarERC1155', function () {
     expect(result.royaltyAmount.toString()).to.equal(royaltyAmountExpected)
   })
 
+  it('Should return a 25% royalty with royaltyInfo', async function () {
+    const tokenID = 0
+    const amount = 1
+    const salePrice = 20000
+    const royaltyAmountExpected = Math.round(20000 * 0.025).toString()
+    const royaltyPercentPoints = 2.5 * 100
+    const expectedRoyaltyPercentPoints = (2.5 * 100).toString()
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
+    await dropStarERC1155.setRoyalties(
+      tokenID,
+      deployer.address,
+      royaltyPercentPoints,
+    )
+    const resultEIP2981 = await dropStarERC1155.royaltyInfo(tokenID, salePrice)
+
+    expect(resultEIP2981.royaltyAmount.toString()).to.equal(
+      royaltyAmountExpected,
+    )
+
+    const resultRaribleV2Royalties =
+      await dropStarERC1155.getRaribleV2Royalties(tokenID)
+
+    expect(resultRaribleV2Royalties).to.be.an('array').of.lengthOf(1)
+    expect(resultRaribleV2Royalties[0]).to.have.property('value')
+    expect(resultRaribleV2Royalties[0]).to.have.property('account')
+
+    expect(resultRaribleV2Royalties[0].account).to.equal(deployer.address)
+    expect(resultRaribleV2Royalties[0].value.toString()).to.equal(
+      expectedRoyaltyPercentPoints,
+    )
+  })
+
   it('Should return a 33% royalty with getRaribleV2Royalties', async function () {
     const tokenID = 0
     const amount = 1
