@@ -3,6 +3,7 @@ const { makeInterfaceId } = require('@openzeppelin/test-helpers')
 const { expect } = require('chai')
 
 const INTERFACES = {
+  Ownable: ['owner()', 'renounceOwnership()', 'transferOwnership(address)'],
   ERC165: ['supportsInterface(bytes4)'],
   ERC721: [
     'balanceOf(address)',

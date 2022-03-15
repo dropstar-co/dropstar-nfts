@@ -11,14 +11,15 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./@dropstar/royalties/impl/DropStarERC1155withRoyaltyImpl.sol";
 import "./@dropstar/content/impl/DropStarERC1155withGatedContentImpl.sol";
 
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
 
 contract DropStarERC1155 is
     ERC1155Pausable,
     ERC1155Supply,
-    AccessControlEnumerable,
+    AccessControl,
+    Ownable,
     DropStarERC1155withRoyaltyImpl,
     DropStarERC1155withGatedContentImpl
 {
@@ -94,7 +95,7 @@ contract DropStarERC1155 is
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC1155, AccessControlEnumerable, IERC165)
+        override(ERC1155, AccessControl, IERC165)
         returns (bool)
     {
         return

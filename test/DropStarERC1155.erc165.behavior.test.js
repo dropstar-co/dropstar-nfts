@@ -17,10 +17,5 @@ contract('DropStarERC1155', function (accounts) {
     })
   })
 
-  shouldSupportInterfaces([
-    'AccessControl',
-    'AccessControlEnumerable',
-    'IERC2981',
-    'ERC1155',
-  ])
+  shouldSupportInterfaces(['AccessControl', 'IERC2981', 'ERC1155'])
 })
