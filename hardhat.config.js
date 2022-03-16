@@ -11,6 +11,7 @@ const {
   ALCHEMY_API_KEY_MAINNET,
   ALCHEMY_API_KEY_POLYGON,
   DEPLOYER_PRIVATE_KEY,
+  DEPLOYER_PRIVATE_KEY_PRODUCTION,
   COINMARKETCAP_KEY,
 } = require('./.env.js')
 
@@ -45,12 +46,12 @@ module.exports = {
     },
     polygon: {
       url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_POLYGON}`,
-      accounts: [`${DEPLOYER_PRIVATE_KEY}`],
+      accounts: [`${DEPLOYER_PRIVATE_KEY_PRODUCTION}`],
     },
   },
   gasReporter: {
-    currency: 'EUR',
-    gasPrice: 100,
+    currency: 'MATIC',
+    gasPrice: 40,
     coinmarketcap: COINMARKETCAP_KEY,
     token: 'MATIC',
   },

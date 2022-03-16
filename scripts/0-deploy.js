@@ -9,7 +9,11 @@ const fs = require('fs')
 const { NFTStorage, File } = require('nft.storage')
 const fetch = require('node-fetch')
 
-const { NFT_STORAGE_API_KEY } = require('../.env.js')
+const {
+  NFT_STORAGE_API_KEY,
+  GUTTO_SERTA_ADDRESS,
+  ROYALTY_SPLITS_ADDRESS,
+} = require('../.env.js')
 
 const useNTFStorage_directory = require('./nftstorage')
 
@@ -40,14 +44,25 @@ async function main() {
 
   const calldata = '0x00'
 
-  console.log('Sending to dropstarDeveloper')
+  console.log('Granting minter role to gutto')
+  await dropStarERC1155.grantRole(
+    await dropStarERC1155.MINTER_ROLE(),
+    GUTTO_SERTA_ADDRESS,
+  )
 
+  console.log('    granted')
+  /*
+  const tokenIds = [0, 1, 2, 3, 4, 5]
+  const amounts = [1, 1, 1, 1, 1, 1]
+
+  console.log('Sending to GUTTO_SERTA_ADDRESS')
   await dropStarERC1155.mintBatch(
-    deployer.address,
-    [0, 1, 2, 3, 4, 5],
-    [1, 1, 1, 1, 1, 1],
+    GUTTO_SERTA_ADDRESS,
+    tokenIds,
+    amounts,
     calldata,
   )
+  */
 }
 
 // We recommend this pattern to be able to use async/await everywhere
