@@ -33,6 +33,7 @@ async function main() {
       royaltyCharged !== 3
     ) {
       console.log('Need to update tokenId=' + i)
+      continue
       await nft
         .connect(deployer)
         .setRoyalties(tokenId, ROYALTY_SPLITS_ADDRESS, royaltyPercentPoints)
