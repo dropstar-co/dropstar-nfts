@@ -3,9 +3,10 @@ const hre = require('hardhat')
 async function main() {
   const [deployer] = await ethers.getSigners()
 
-  const contractAddresses = ['0x5BD79179cF7742D1263E6f3A7a06a47296f7B305']
+  const contractAddresses = ['0x2953399124f0cbb46d2cbacd8a89cf0599974963']
 
-  const tokenID = 0
+  const tokenID =
+    '103184150694614445490038962927795508385754129395909934469658111649233795809281'
   const dropstarDeveloper = '0x5e14b4d9af29066153c9ee3fc2563c95784a687a'
 
   console.log({ contractAddresses })

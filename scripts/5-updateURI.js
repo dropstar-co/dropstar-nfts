@@ -6,36 +6,39 @@
 const hre = require('hardhat')
 const fs = require('fs')
 
-const { NFTStorage, File } = require('nft.storage')
-
-const { NFT_STORAGE_API_KEY } = require('../.env.js')
+const {
+  NFT_STORAGE_API_KEY,
+  NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
+} = require('../.env.js')
 
 const useNTFStorage_directory = require('./nftstorage')
 
 async function main() {
-  const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
-
-  const metadataCID = await useNTFStorage_directory(
-    storage,
-    './nft/Drop 1_AOSMx/img',
-    './nft/Drop 1_AOSMx/metadata',
-  )
-
-  const metadataURI = `ipfs://${metadataCID.cid}/{id}`
-
-  console.log({ metadataCID })
-  console.log({ metadataURI })
+  const metadataURI =
+    'ipfs://bafybeiaqntg5bnxvaafpe4qlurjzz2pzt74zkisqoaq7iyi5axcgelv4ey/{id}'
 
   const [deployer] = await ethers.getSigners()
 
   console.log(`deployer.addresss = ${deployer.address}`)
 
-  const DropStarERC1155 = await hre.ethers.getContractFactory('DropStarERC1155')
-  const dropStarERC1155 = await DropStarERC1155.deploy(metadataURI)
+  const nft = await hre.ethers.getContractAt(
+    'DropStarERC1155',
+    NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
+  )
 
-  await dropStarERC1155.deployed()
+  console.log('nft.address = ' + nft.address)
 
-  console.log('dropStarERC1155 deployed to:', dropStarERC1155.address)
+  const blockchainURI = await nft.uri(0)
+
+  console.log({ metadataURI, blockchainURI })
+
+  if (blockchainURI == metadataURI) {
+    console.log('URI already updated to the newest')
+  } else {
+    console.log('Setting metadataURI')
+    await nft.setURI(metadataURI)
+    console.log('      set')
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

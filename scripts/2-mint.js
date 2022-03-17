@@ -1,20 +1,35 @@
 const hre = require('hardhat')
 
-const { GUTTO_SERTA_ADDRESS } = require('../.env.js')
-
-const { parseUnits } = ethers.utils
+const {
+  GUTTO_SERTA_METAMASK_ADDRESS,
+  NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
+} = require('../.env.js')
 
 async function main() {
   const [deployer] = await ethers.getSigners()
 
-  const contractAddress = '0xea308c14D36c833CAb297809dCc13fDc0518579C'
-  const nft = await hre.ethers.getContractAt('DropStarERC1155', contractAddress)
+  const nft = await hre.ethers.getContractAt(
+    'DropStarERC1155',
+    NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
+  )
 
   const tokenIds = [0, 1, 2, 3, 4, 5]
   const amounts = [1, 1, 1, 1, 1, 1]
 
-  console.log('Sending to GUTTO_SERTA_ADDRESS')
-  await nft.mintBatch(GUTTO_SERTA_ADDRESS, tokenIds, amounts, '0x00')
+  let i
+  for (i = 0; i < tokenIds.length; i++) {
+    const tokenId = tokenIds[i]
+
+    const supply = await nft.totalSupply(tokenId)
+    console.log(
+      `Suply of ${NFT_PLASTIK_BODIES_CONTRACT_ADDRESS}/${tokenId} = ${supply}`,
+    )
+  }
+
+  return
+
+  console.log('Sending to GUTTO_SERTA_METAMASK_ADDRESS')
+  await nft.mintBatch(GUTTO_SERTA_METAMASK_ADDRESS, tokenIds, amounts, '0x00')
 }
 
 main()
