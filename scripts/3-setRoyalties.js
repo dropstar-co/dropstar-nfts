@@ -15,29 +15,32 @@ async function main() {
     NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
   )
 
-  const royaltyPercentPoints = 2.5 * 100
-
-  const royaltyInfo_0 = await nft.royaltyInfo(0, parseUnits('100', 'ether'))
-
-  console.log(royaltyInfo_0.royaltyAmount)
+  const tokenIds = [0, 1, 2, 3, 4, 5, 6]
+  const royaltyPercentPoints = 3 * 100
   console.log({ royaltyPercentPoints })
 
-  const royaltyCharged = formatEther(royaltyInfo_0.royaltyAmount.toString())
-
-  console.log({ royaltyCharged })
-
-  return
-
-  console.log('Setting royalties')
-  const tokenIds = [0, 1, 2, 3, 4, 5, 6]
-  let i
   for (i = 0; i < tokenIds.length; i++) {
     const tokenId = tokenIds[i]
-    await nft
-      .connect(deployer)
-      .setRoyalties(tokenId, ROYALTY_SPLITS_ADDRESS, royaltyPercentPoints)
+    const royaltyInfo = await nft.royaltyInfo(0, parseUnits('100', 'ether'))
+    console.log({ royaltyInfo })
+    const royaltyCharged = parseFloat(
+      formatEther(royaltyInfo.royaltyAmount.toString()),
+    )
+    console.log({ royaltyCharged })
 
-    console.log(`    on tokenId=${i}`)
+    if (
+      royaltyInfo.receiver !== ROYALTY_SPLITS_ADDRESS ||
+      royaltyCharged !== 3
+    ) {
+      console.log('Need to update tokenId=' + i)
+      await nft
+        .connect(deployer)
+        .setRoyalties(tokenId, ROYALTY_SPLITS_ADDRESS, royaltyPercentPoints)
+
+      console.log(`    on tokenId=${i}`)
+    } else {
+      console.log('tokenId=' + i + ' OK')
+    }
   }
 }
 
