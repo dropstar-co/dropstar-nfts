@@ -1,6 +1,7 @@
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-ethers')
 require('@nomiclabs/hardhat-truffle5')
+require('@nomiclabs/hardhat-etherscan')
 require('hardhat-abi-exporter')
 require('solidity-coverage')
 require('hardhat-etherscan-abi')
@@ -13,6 +14,7 @@ const {
   DEPLOYER_PRIVATE_KEY,
   DEPLOYER_PRIVATE_KEY_PRODUCTION,
   COINMARKETCAP_KEY,
+  POLYGONSCAN_API_KEY,
 } = require('./.env.js')
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -54,5 +56,11 @@ module.exports = {
     gasPrice: 40,
     coinmarketcap: COINMARKETCAP_KEY,
     token: 'MATIC',
+  },
+  etherscan: {
+    apiKey: {
+      polygon: POLYGONSCAN_API_KEY,
+      polygonMumbai: POLYGONSCAN_API_KEY,
+    },
   },
 }
