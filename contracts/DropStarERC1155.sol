@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./@rarible/royalties/LibRoyaltiesV2.sol";
+import "./@rarible/royalties/LibRoyalties2981.sol";
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -104,6 +105,7 @@ contract DropStarERC1155 is
             interfaceId == type(AccessControl).interfaceId ||
             interfaceId == type(IERC2981).interfaceId ||
             interfaceId == LibRoyaltiesV2._INTERFACE_ID_ROYALTIES ||
+            interfaceId == LibRoyalties2981._INTERFACE_ID_ROYALTIES ||
             super.supportsInterface(interfaceId);
     }
 
@@ -115,6 +117,22 @@ contract DropStarERC1155 is
         uint256[] memory amounts,
         bytes memory data
     ) internal override(ERC1155Supply, ERC1155Pausable) whenNotPaused {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+        ERC1155Pausable._beforeTokenTransfer(
+            operator,
+            from,
+            to,
+            ids,
+            amounts,
+            data
+        );
+
+        ERC1155Supply._beforeTokenTransfer(
+            operator,
+            from,
+            to,
+            ids,
+            amounts,
+            data
+        );
     }
 }

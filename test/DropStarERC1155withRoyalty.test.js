@@ -134,4 +134,68 @@ describe('DropStarERC1155', function () {
     expect(royaltyInfo[0]).to.equal(ethers.constants.AddressZero)
     expect(royaltyInfo[1]).to.equal('0')
   })
+
+  it('Should update royalties properly', async function () {
+    const tokenID = 0
+    const amount = 1
+    const salePrice = parseUnits('100', 'ether')
+
+    const expectedRoyaltyPercentPoints = (33 * 100).toString()
+    const royaltyPercentPoints = 33 * 100
+    await dropStarERC1155.mint(deployer.address, tokenID, amount, DATA)
+    await dropStarERC1155.setRoyalties(
+      tokenID,
+      deployer.address,
+      royaltyPercentPoints,
+    )
+
+    const resultRaribleV2Royalties =
+      await dropStarERC1155.getRaribleV2Royalties(tokenID)
+
+    const resultRoyaltyInfo = await dropStarERC1155.royaltyInfo(
+      tokenID,
+      salePrice,
+    )
+
+    console.log({
+      resultRaribleV2Royalties,
+      resultRoyaltyInfo,
+    })
+
+    expect(resultRaribleV2Royalties).to.be.an('array').of.lengthOf(1)
+    expect(resultRaribleV2Royalties[0]).to.have.property('value')
+    expect(resultRaribleV2Royalties[0]).to.have.property('account')
+
+    expect(resultRaribleV2Royalties[0].account).to.equal(deployer.address)
+    expect(resultRaribleV2Royalties[0].value.toString()).to.equal(
+      expectedRoyaltyPercentPoints,
+    )
+
+    const expectedRoyaltyPercentPoints2 = (55 * 100).toString()
+    const royaltyPercentPoints2 = 55 * 100
+    await dropStarERC1155.setRoyalties(
+      tokenID,
+      other.address,
+      royaltyPercentPoints2,
+    )
+
+    const resultRaribleV2Royalties2 =
+      await dropStarERC1155.getRaribleV2Royalties(tokenID)
+
+    const resultRoyaltyInfo2 = await dropStarERC1155.royaltyInfo(
+      tokenID,
+      salePrice,
+    )
+
+    console.log({ resultRaribleV2Royalties2, resultRoyaltyInfo2 })
+
+    expect(resultRaribleV2Royalties2).to.be.an('array').of.lengthOf(1)
+    expect(resultRaribleV2Royalties2[0]).to.have.property('value')
+    expect(resultRaribleV2Royalties2[0]).to.have.property('account')
+
+    expect(resultRaribleV2Royalties2[0].account).to.equal(other.address)
+    expect(resultRaribleV2Royalties2[0].value.toString()).to.equal(
+      expectedRoyaltyPercentPoints2,
+    )
+  })
 })

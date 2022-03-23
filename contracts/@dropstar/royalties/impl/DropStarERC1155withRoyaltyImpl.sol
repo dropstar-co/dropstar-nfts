@@ -49,7 +49,7 @@ abstract contract DropStarERC1155withRoyaltyImpl is RoyaltiesV2Impl, IERC2981 {
         LibPart.Part[] memory _royalties = new LibPart.Part[](1);
         _royalties[0].value = _percentageBasisPoints;
         _royalties[0].account = _royaltiesRecipientAddress;
-        _saveRoyalties(_tokenId, _royalties);
+        _setRoyalties(_tokenId, _royalties);
 
         emit RoyaltyRecipientChanged(
             _tokenId,

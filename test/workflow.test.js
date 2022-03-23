@@ -134,14 +134,6 @@ describe('workflow simulation', function () {
 
     const royaltyPercentPoints = 25
 
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-
     /**
      * ######################################################################
      * ######################################################################
@@ -150,84 +142,8 @@ describe('workflow simulation', function () {
      * ######################################################################
      * ######################################################################
      */
-
-    //TODO: disabled test
-
-    // Part B.- Prepare the PSO
-    const PSO = await ethers.getContractFactory('PrimarySaleOrchestrator')
-    pso = await PSO.deploy()
-
-    await pso.deployed()
-
-    await nft.connect(guttoSerta).setApprovalForAll(pso.address, true)
-
-    return
-
-    await createCheques()
-
-    const initialBalance = await provider.getBalance(_0xSplits.address)
-
-    const hash = await pso.doHash(
-      chequeBidWinner1._tokenAddress,
-      chequeBidWinner1._tokenId,
-      chequeBidWinner1._holderAddress,
-      chequeBidWinner1._price,
-      chequeBidWinner1._bidWinnerAddress,
-      chequeBidWinner1._paymentRecipientAddress,
-      chequeBidWinner1._startDate,
-      chequeBidWinner1._deadline,
-    )
-    const recoverExpected = deployer.address
-    const recoverReceived = await pso.recover(
-      hash,
-      chequeBidWinner1._signature.v,
-      chequeBidWinner1._signature.r,
-      chequeBidWinner1._signature.s,
-    )
-
-    const recoverSigners = await pso.signersAll()
-
-    await nft.connect(guttoSerta).setApprovalForAll(pso.address, true)
-
-    const result = await call_PSO_fulfillBid(pso, bidWinner1, chequeBidWinner1)
-
-    const finalBalance = await provider.getBalance(_0xSplits.address)
-
-    expect(formatEther(finalBalance)).to.equal(
-      formatEther(initialBalance.add(chequeBidWinner1._price)),
-    )
   })
 })
-
-async function call_PSO_fulfillBid(
-  primarySaleOrchestrator,
-  caller,
-  cheque,
-  overrides,
-) {
-  return primarySaleOrchestrator.connect(caller).fulfillBid(
-    cheque._tokenAddress,
-    cheque._tokenId,
-    cheque._holderAddress,
-    cheque._price,
-    cheque._bidWinnerAddress,
-    cheque._paymentRecipientAddress,
-    cheque._startDate,
-    cheque._deadline,
-    [
-      {
-        r: cheque._signature.r,
-        s: cheque._signature.s,
-        v: cheque._signature.v,
-      },
-    ],
-    overrides
-      ? overrides
-      : {
-          value: cheque._price,
-        },
-  )
-}
 
 async function sign(
   signer,
