@@ -21,8 +21,8 @@ async function main() {
 
   const metadataCID = await useNTFStorage_directory(
     storage,
-    '/home/jorge/development/dropstar/1-nft-deploy/nft/Drop 1_AOSMx-converted/img',
-    '/home/jorge/development/dropstar/1-nft-deploy/nft/Drop 1_AOSMx-converted/metadata',
+    './nft/Drop 1_AOSMx-tickets/img',
+    './nft/Drop 1_AOSMx-tickets/metadata',
   )
 
   const metadataURI = `ipfs://${metadataCID.cid}/{id}`
@@ -42,7 +42,7 @@ async function main() {
   console.log(await nft.uri(0))
 
   console.log('Setting the uri')
-  await nft.setUri(metadataURI)
+  await nft.setURI(metadataURI)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

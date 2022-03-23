@@ -17,8 +17,8 @@ async function main() {
 
   const metadataCID = await useNTFStorage_directory(
     storage,
-    './nft/Drop 1_AOSMx/img',
-    './nft/Drop 1_AOSMx/metadata',
+    './nft/Drop 1_AOSMx-initial/img',
+    './nft/Drop 1_AOSMx-initial/metadata',
   )
 
   const metadataURI = `ipfs://${metadataCID.cid}/{id}`
@@ -29,6 +29,8 @@ async function main() {
   const [deployer] = await ethers.getSigners()
 
   console.log(`deployer.addresss = ${deployer.address}`)
+
+  return
 
   const DropStarERC1155 = await hre.ethers.getContractFactory('DropStarERC1155')
   const dropStarERC1155 = await DropStarERC1155.deploy(metadataURI)
