@@ -6,31 +6,13 @@
 const hre = require('hardhat')
 const fs = require('fs')
 
-const { NFTStorage, File } = require('nft.storage')
-const fetch = require('node-fetch')
-
 const {
-  NFT_STORAGE_API_KEY,
-  GUTTO_SERTA_ADDRESS,
-  ROYALTY_SPLITS_ADDRESS,
   NFT_PLASTIK_BODIES_CONTRACT_ADDRESS_ROYALTIES_FIXED,
 } = require('../.env.js')
 
-const useNTFStorage_directory = require('./nftstorage')
-
 async function main() {
-  const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
-
-  const metadataCID = await useNTFStorage_directory(
-    storage,
-    './nft/Drop 1_AOSMx-converted/img',
-    './nft/Drop 1_AOSMx-converted/metadata',
-  )
-
-  const metadataURI = `ipfs://${metadataCID.cid}/{id}`
-
-  console.log({ metadataCID })
-  console.log({ metadataURI })
+  const newMetadataURI =
+    'https://dropstar-nft.s3.eu-west-3.amazonaws.com/Drop+1_AOSM_x/{id}.json'
 
   const [deployer] = await ethers.getSigners()
 
@@ -41,12 +23,19 @@ async function main() {
     NFT_PLASTIK_BODIES_CONTRACT_ADDRESS_ROYALTIES_FIXED,
   )
 
-  console.log(await nft.uri(0))
+  console.log('nft.address = ' + nft.address)
 
-  return
+  const oldMetadataURI = await nft.uri(0)
 
-  console.log('Setting the uri')
-  await nft.setUri(metadataURI)
+  console.log({ newMetadataURI, oldMetadataURI })
+
+  if (oldMetadataURI == newMetadataURI) {
+    console.log('URI already updated to the newest')
+  } else {
+    console.log('Setting metadataURI')
+    await nft.setURI(newMetadataURI)
+    console.log('      set')
+  }
 }
 
 // We recommend this pattern to be able to use async/await everywhere
