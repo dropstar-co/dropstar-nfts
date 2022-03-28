@@ -41,7 +41,7 @@ async function main() {
     NFT_PLASTIK_BODIES_CONTRACT_ADDRESS,
   )
 
-  console.log(await nft.getURI(0))
+  console.log(await nft.uri(0))
 
   return
 
