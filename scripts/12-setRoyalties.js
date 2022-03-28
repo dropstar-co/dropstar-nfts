@@ -16,7 +16,8 @@ async function main() {
   )
 
   const tokenIds = [0, 1, 2, 3, 4, 5, 6]
-  const royaltyPercentPoints = 3 * 100
+  const percent = 3
+  const royaltyPercentPoints = percent * 100
   console.log({ royaltyPercentPoints })
 
   console.log({
@@ -38,7 +39,7 @@ async function main() {
 
     if (
       royaltyInfo.receiver !== ROYALTY_SPLITS_ADDRESS ||
-      royaltyCharged !== 3
+      royaltyCharged !== percent
     ) {
       console.log('Need to update tokenId=' + i)
 

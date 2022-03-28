@@ -23,8 +23,8 @@ async function main() {
 
   const metadataCID = await useNTFStorage_directory(
     storage,
-    '/home/jorge/development/dropstar/1-nft-deploy/nft/Drop 1_AOSMx/img',
-    '/home/jorge/development/dropstar/1-nft-deploy/nft/Drop 1_AOSMx/metadata',
+    './nft/Drop 1_AOSMx/img',
+    './nft/Drop 1_AOSMx/metadata',
   )
 
   const metadataURI = `ipfs://${metadataCID.cid}/{id}`

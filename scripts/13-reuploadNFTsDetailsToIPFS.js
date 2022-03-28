@@ -9,18 +9,22 @@ const fs = require('fs')
 const { NFTStorage, File } = require('nft.storage')
 const fetch = require('node-fetch')
 
-const { NFT_STORAGE_API_KEY } = require('../.env.js')
+const {
+  NFT_STORAGE_API_KEY,
+  GUTTO_SERTA_ADDRESS,
+  ROYALTY_SPLITS_ADDRESS,
+  NFT_PLASTIK_BODIES_CONTRACT_ADDRESS_ROYALTIES_FIXED,
+} = require('../.env.js')
 
 const useNTFStorage_directory = require('./nftstorage')
 
 async function main() {
-  console.log({ pwd: process.env.PWD })
-
   const storage = new NFTStorage({ token: NFT_STORAGE_API_KEY })
+
   const metadataCID = await useNTFStorage_directory(
     storage,
-    './nft/pavos-jaen/img',
-    './nft/pavos-jaen/metadata',
+    './nft/Drop 1_AOSMx-converted/img',
+    './nft/Drop 1_AOSMx-converted/metadata',
   )
 
   const metadataURI = `ipfs://${metadataCID.cid}/{id}`
@@ -30,28 +34,19 @@ async function main() {
 
   const [deployer] = await ethers.getSigners()
 
-  console.log('deployer.address')
-  console.log(deployer.address)
+  console.log(`deployer.addresss = ${deployer.address}`)
 
-  const DropStarERC1155 = await hre.ethers.getContractFactory('DropStarERC1155')
-  const dropStarERC1155 = await DropStarERC1155.deploy()
+  const nft = await hre.ethers.getContractAt(
+    'DropStarERC1155',
+    NFT_PLASTIK_BODIES_CONTRACT_ADDRESS_ROYALTIES_FIXED,
+  )
 
-  await dropStarERC1155.deployed()
+  console.log(await nft.getURI(0))
 
-  await dropStarERC1155.setURI(metadataURI)
+  return
 
-  console.log('dropStarERC1155 deployed to:', dropStarERC1155.address)
-
-  const dropstarDeveloper = '0x5e14b4D9af29066153C9ee3fC2563c95784a687a'
-  const tokenID = 0
-  const amount = 6
-  const calldata = '0x00'
-
-  console.log('Sending to dropstarDeveloper')
-
-  await dropStarERC1155.mint(deployer.address, 0, amount, calldata)
-  await dropStarERC1155.mint(deployer.address, 1, amount, calldata)
-  await dropStarERC1155.mint(deployer.address, 2, amount, calldata)
+  console.log('Setting the uri')
+  await nft.setUri(metadataURI)
 }
 
 // We recommend this pattern to be able to use async/await everywhere
